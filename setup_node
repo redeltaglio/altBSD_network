@@ -1701,6 +1701,7 @@ function configuration {
 					echo "PowerDNS is running..." ; exit 1
 		;;
 		"wireguard")
+
 			ifconfig wg > /dev/null 2>&1
 			[[ $? -eq 1 ]] && (
 				let i=0
