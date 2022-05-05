@@ -1,0 +1,6 @@
+--2022-05-04 22:30:38--  https://www.google.com/search?q=openbsd+relayd+iked+isakmpd
+Resolving www.google.com (www.google.com)... 142.250.184.4, 2a00:1450:4003:811::2004
+Connecting to www.google.com (www.google.com)|142.250.184.4|:443... connected.
+HTTP request sent, awaiting response... 403 Forbidden
+2022-05-04 22:30:39 ERROR 403: Forbidden.
+
