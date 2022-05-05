@@ -2133,8 +2133,8 @@ Remember that you can use also iperf or others tools to size it. Next you can si
 
 ![](https://raw.githubusercontent.com/redeltaglio/OpenBSD/master/img/ospf-timers-guide-table.webp)
 
-#### Git suck
+#### Git sucks
 
-Why not "Game of trees"? 
+Why not "[game of trees](https://gameoftrees.org/)"? Or "[game of thrones](https://en.wikipedia.org/wiki/Game_of_Thrones)"? Or other acronym?
 
 ![](https://gameoftrees.org/got.png)
