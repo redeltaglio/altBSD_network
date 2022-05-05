@@ -87,6 +87,38 @@ First of all install a classic Linux, like Debian for example. Next ssh to the n
 # echo b > /proc/sysrq-trigger 
 ```
 
+#### Generate custom `install.conf` and `disklabel` for new host
+
+Sometimes it would be interesting that end user generate files in the `installation/` because of different `VPS` provider specifications.  `console` script got `-CI` as the correct option to do it in a simple way:
+
+```bash
+taglio@trimurti:~/Work/telecom.lobby/OpenBSD$ ./console -I telecom.lobby -CI
+Build IPv4 static custom installation template? yes/no: yes
+Type IPv4 address for vio0: 160.119.248.111
+Type netmask for vio0: 255.255.255.0
+Type default IPv4 route: 160.119.248.1  
+Build custom size disklabel? yes/no: yes
+Type size in GB: 20
+Files added, please update the repository and remember to use https://bit.ly/3HD0Wne
+taglio@trimurti:~/Work/telecom.lobby/OpenBSD$
+```
+
+In this case remember that in the remote `VNC` web console you've got to configure the same static IPv4 and DNS in order to obtain connectivity to Internet:
+
+```bash
+# ifconfig vio0 160.119.248.111 netmask 255.255.255.0 up
+# route add 0.0.0.0/0 160.119.248.1
+# echo nameserver 8.8.8.8 > /etc/resolv.conf
+```
+
+Next to start the installation process as usual:
+
+```bash
+# cd /tmp
+# ftp -o install.conf https://bit.ly/3HD0Wne
+# install -af /tmp/install.conf
+```
+
 #### Semi automatic system installation
 
 Open the `KVM` web console and the installation process of OpenBSD will start. Interrupt it choosing for the (S)hell option and:
@@ -563,7 +595,7 @@ Use `newhost` and `transfer` options.
 #### Automatic install
 
 ```shell
-taglio@varuna:/home/taglio$ cat /tmp/config.ini                                                                                        static#1
+taglio@varuna:/home/taglio$ cat /tmp/config.ini                                              static#1
 ipv6ctrl#static
 ipv6egress#2a01:8740:1:ff48::64a8
 ipv6prefix#48
@@ -607,7 +639,7 @@ riccardo@trimurti:~/Work/telecom.lobby/OpenBSD$
 And update the zone in the server and the `openbsd` record:
 
 ```shell
-root@cyberanarkhia:/var/nsd/zones/master# rcctl restart nsd                                                                                                                                                                                                                 
+root@cyberanarkhia:/var/nsd/zones/master# rcctl restart nsd                                                                               
 nsd(ok)
 nsd(ok)
 root@cyberanarkhia:/var/nsd/zones/master# rcctl restart unbound
@@ -1088,38 +1120,6 @@ Connecting to bhagavati
 Connection to bhagavati.telecom.lobby closed.
 taglio@trimurti:~/Work/telecom.lobby/OpenBSD$
 
-```
-
-#### Generate custom `install.conf` and `disklabel` for new host
-
-Sometimes it would be interesting that end user generate files in the `installation/` because of different `VPS` provider specifications.  `console` script got `-CI` as the correct option to do it in a simple way:
-
-```bash
-taglio@trimurti:~/Work/telecom.lobby/OpenBSD$ ./console -I telecom.lobby -CI
-Build IPv4 static custom installation template? yes/no: yes
-Type IPv4 address for vio0: 160.119.248.111
-Type netmask for vio0: 255.255.255.0
-Type default IPv4 route: 160.119.248.1  
-Build custom size disklabel? yes/no: yes
-Type size in GB: 20
-Files added, please update the repository and remember to use https://bit.ly/3HD0Wne
-taglio@trimurti:~/Work/telecom.lobby/OpenBSD$
-```
-
-In this case remember that in the remote `VNC` web console you've got to configure the same static IPv4 and DNS in order to obtain connectivity to Internet:
-
-```bash
-# ifconfig vio0 160.119.248.111 netmask 255.255.255.0 up
-# route add 0.0.0.0/0 160.119.248.1
-# echo nameserver 8.8.8.8 > /etc/resolv.conf
-```
-
-Next to start the installation process as usual:
-
-```bash
-# cd /tmp
-# ftp -o install.conf https://bit.ly/3HD0Wne
-# install -af /tmp/install.conf
 ```
 
 #### Delete a VPS instance that you own
