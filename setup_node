@@ -936,6 +936,28 @@ function admin {
 		"cleanlast")
 			[[ -e "/tmp/cleantmp" ]] && sh  $basedir/tools/clean_last $(cat /tmp/cleantmp)
 		;;
+		"vultrvpc")
+			ifconfig vio1 > /dev/null 2>&1
+			[ $? -eq 0 ] && (
+				ipvpc=
+				while [ -z $ipvpc ]
+				do
+					echo "Type vio1 Vultr VPC assigned IPv4: [IPv4] "
+					read ipvpc
+				done
+				maskvpc=
+				while [ -z $maskvpc ]
+				do
+					echo "Type vio1 Vultr VPC assigned Netmask: [Netmask] "
+					read maskvpc
+				done
+				ifconfig vio1 "${ipvpc}" "${maskvpc}" up
+				echo "-inet" > /etc/hostname.vio1
+				echo "-inet6" >> /etc/hostname.vio1
+				echo "inet ${ipvpc} ${maskvpc}" >> /etc/hostname.vio1
+				echo "up" >> /etc/hostname.vio1
+ 			)
+		;;
 		"sslcareq")
 			cd /etc/ssl
 			ftp -o /tmp/root-ca.crt http://ocsp.$(hostname | sed "s/$(hostname -s).//")/root-ca.crt
@@ -2482,6 +2504,7 @@ case $1 in
 				\ncleanlast \
 				\nsslcareq \
 				\notheros \
+				\nvultrvpc \
 				\n"
 			exit 1
 		fi
@@ -2494,6 +2517,9 @@ case $1 in
 			;;
 			"otheros")
 				admin "otheros"
+			;;
+			"vultrvpc")
+				admin "vultrvpc"
 			;;
 		esac
 	;;
