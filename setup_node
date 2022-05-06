@@ -951,10 +951,11 @@ function admin {
 					echo "Type vio1 Vultr VPC assigned Netmask: [Netmask] "
 					read maskvpc
 				done
-				ifconfig vio1 "${ipvpc}" "${maskvpc}" up
+				ifconfig vio1 "${ipvpc}" netmask "${maskvpc}" up
 				echo "-inet" > /etc/hostname.vio1
 				echo "-inet6" >> /etc/hostname.vio1
-				echo "inet ${ipvpc} ${maskvpc}" >> /etc/hostname.vio1
+				echo "mtu 1450" >> /etc/hostname.vio1
+				echo "!ifconfig vio1 ${ipvpc} netmask ${maskvpc}" >> /etc/hostname.vio1
 				echo "up" >> /etc/hostname.vio1
  			)
 		;;
@@ -1684,13 +1685,17 @@ function configuration {
 		;;
 		"ospfstub")
 			rcctl enable ospfd
-			ksh "$basedir/$app" -A "vpcvultr"
 			install -o root -g wheel -m 0600  $basedir/src/etc/ospfdstub.conf /etc/ospfd.conf
 			sed -i "s/\/ROUTERID\//$routerid/g" /etc/ospfd.conf
 			sed -i "s/\/ROUTERIDLAST\//$routeridlast/g" /etc/ospfd.conf
 			ospfmd5=$(tr -cd '[:alnum:],.' < /dev/urandom | fold -w 15 | head -n 1)
 			sed -i "s/\/OSPFMD5\//${ospfmd5}/g" /etc/ospfd.conf
-
+			pidof_ospfd=$(pidof "ospfd")
+			if [[ -z $pidof_ospfd ]]; then
+				rcctl start ospfd ||  error_exit "$LINENO: ERROR: OSPFD failed."
+			else
+				rcctl restart ospfd ||  error_exit "$LINENO: ERROR: OSPFD failed."
+			fi
 		;;
 		"ntpd")
 			install -o root -g wheel -m 0644  $basedir/src/etc/ntpd.conf /etc/
@@ -1946,6 +1951,8 @@ function ikechoose {
 					fi
 				done
 			fi
+			echo "configuring Vultr VPC if present \n"
+			ksh "$basedir/$app" -A "vpcvultr"
 			echo "configuring PF firewall and others environments \n"
 			if [[ $configini -eq 1 ]]; then
 				configuration "pfikev1"
@@ -1980,6 +1987,7 @@ function ikechoose {
 					fi
 				done
 			fi
+			exit
 		;;
 	esac
 }
