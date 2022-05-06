@@ -1,0 +1,147 @@
+#	$OpenBSD: pf.conf,v 1.55 2017/12/03 20:40:04 sthen Exp $
+#
+# See pf.conf(5) and /etc/examples/pf.conf
+# PF diagram: https://github.com/redeltaglio/OpenBSD/raw/master/pdf/pf_packetflow_diagram.pdf
+
+# read the log file: tcpdump -n -e -ttt -r /var/log/pflog
+# real-time logging: tcpdump -neq -ttt -i pflog0
+#                    tcpdump -nettti pflog0 action drop
+#		     tcpdump -vvopn -i enc0
+# show queue: pfctl -vvs queue
+#             systat queues
+# show stats: pfctl -s info
+#             systat pf
+# show states: pfctl -s states
+#              systat states
+# table stats: pfctl -v -t martians -T show
+# show rule nr. 4: pfctl -v -s rules -R 4
+# show rules, prepend rule numbers: pfctl -a '*' -vvsr
+#                                   systat rules
+# show limits: pfctl -s memory
+
+
+#OPTIONS
+set block-policy drop
+set skip on lo
+set skip on pair
+set block-policy drop
+set loginterface egress
+set loginterface gre
+set loginterface vether
+set loginterface enc
+set loginterface pppx
+set timeout { other.first 20, other.multiple 20, other.single 10 }
+
+#VARIABLES
+ext_if="vio0"
+int_if="vio1"
+
+include "/etc/pf.conf.macro.public"
+
+table <users> const persist counters file "/etc/pf.conf.table.users"
+table <locals> const persist counters file "/etc/pf.conf.table.locals"
+table <ipsec> const persist counters file "/etc/pf.conf.table.ipsec"
+table <lte> const persist counters file "/etc/pf.conf.table.lte"
+table <reserved> const persist counters file "/etc/pf.conf.table.reserved"
+table <nsd> const persist counters file "/etc/pf.conf.table.nsd"
+table <unbound> const persist counters file "/etc/pf.conf.table.unbound"
+table <cdn> const persist counters file "/etc/pf.conf.table.cdn"
+table <clientes> const persist counters file "/etc/pf.conf.table.clientes"
+table <guifi> const persist counters file "/etc/pf.conf.table.guifi"
+
+
+
+table <ospf_mcast> persist const {224.0.0.5, 224.0.0.6}
+table <attacker> persist
+table <attacker_v6> persist
+
+#DEFAULT POLICY
+block log
+block quick on $ext_if proto gre
+block quick log  from <attacker>
+block quick log  from <attacker_v6>
+block log  proto {tcp,udp} user _iperfd
+
+
+pass quick on $ext_if to $ext_if:broadcast
+
+#SCRUB
+
+match on pppx scrub  ( reassemble tcp no-df )
+
+#NAT
+
+match out on $ext_if from 10.11./ROUTERIDLAST/.0/24 to ! <reserved> received-on pppx nat-to $pub tag /LANDOMAINNAME/
+
+
+#INGRESS
+
+#PUB
+
+pass in on $ext_if inet6 proto icmp6 icmp6-type { 128, 133, 134, 135, 136 }
+pass in on $ext_if proto icmp from any to $pub icmp-type echoreq
+pass in on $ext_if proto tcp from any to $pub port { smtp, smtps } modulate state (max-src-conn 2, max-src-conn-rate 8/30, overload <attacker>)
+pass in on $ext_if proto tcp from any to $pub_v6 port  { smtp, smtps } modulate state (max-src-conn 2, max-src-conn-rate 8/30, overload <attacker_v6>)
+pass in on $ext_if proto tcp from any to { $pub , $pub_v6 } port auth modulate state
+pass in on $ext_if inet proto {tcp, udp} from any to $pub port domain
+pass in on $ext_if inet6 proto {tcp, udp} from any to $pub_v6 port domain
+pass in on $ext_if proto tcp from any to { $pub , $pub_v6 } port {www, https} modulate state
+pass in on $ext_if proto udp from <lte> to $pub port {isakmp, ipsec-nat-t, l2tp}
+pass in on $ext_if proto esp from <lte> to $pub
+
+#ENC
+
+pass quick on enc proto udp from <lte> port l2tp to $pub port l2tp
+
+#PPPX AND QUEUE FROM IFSTATED
+
+anchor "l2tp" on pppx {
+
+}
+
+
+
+#VETHER
+pass in on vether0 proto icmp from <locals> to vether0 icmp-type echoreq
+pass in on vether0 inet proto udp from <locals> to vether0 port 33433 >< 33626
+pass in on vether0 proto tcp from <users> to vether0 port {ftp, ssh, http, submission, imaps, 31337} modulate state
+pass in on vether0 proto udp from <users> to vether0 port 5353 user _tor
+pass in on vether0 proto tcp from <users> to vether0 port \
+	{9900, 9901, 9902, 9903, 9904, 9905, 9906, 9007, 9008, 9009, 9010, 9011, 9012, 9013, 9050} user _tor modulate state
+pass in on vether0 proto tcp from <locals> to vether0 port {http, submission} modulate state
+pass in on vether0 proto tcp from <locals> to vether0 port 5001 user _iperfd modulate state
+pass in on vether0 proto tcp from <locals> to vether0 port 31338 modulate state
+
+
+#OUTGRESS
+
+#PUB
+
+pass out quick on $ext_if tagged /LANDOMAINNAME/
+pass out quick on $ext_if inet6 proto icmp6 icmp6-type { 128, 133, 134, 135, 136 }
+pass out quick on $ext_if inet proto udp to port 33433 >< 33626
+pass out quick on $ext_if proto icmp from $pub to any icmp-type echoreq
+pass out quick on $ext_if proto tcp from $pub to port whois modulate state
+pass out quick on $ext_if proto tcp from $pub to <ipsec> port {ssh, 31137} modulate state
+pass out quick on $ext_if proto tcp from $pub to any port { smtp, smtps } modulate state
+pass out quick on $ext_if proto tcp to any port { smtp, smtps } modulate state
+pass out quick on $ext_if proto {tcp, udp} from $pub to 8.8.8.8 port domain
+pass out quick on $ext_if proto tcp from $pub to any port {http, https} modulate state
+pass out quick on $ext_if proto {tcp, udp} from $pub to <unbound> port domain-s
+pass out quick on $ext_if proto {tcp, udp} to <unbound> port domain-s
+pass out quick on $ext_if proto {tcp, udp} from $pub port domain user _unbound
+pass out quick on $ext_if proto {tcp, udp} from $pub to <nsd> port domain user _nsd
+pass out quick on $ext_if proto {tcp, udp} from $pub_v6 to <nsd> port domain user _nsd
+pass out quick on $ext_if proto tcp from $pub to <cdn> port {http, https} modulate state
+pass out quick on $ext_if proto tcp from $pub_v6 to <cdn> port {http, https} modulate state
+pass out quick on $ext_if proto udp from $pub to <lte> port {isakmp, ipsec-nat-t, l2tp}
+pass out quick on $ext_if proto esp from $pub to <lte>
+
+
+#ENC
+
+pass out quick on enc proto udp from $pub port l2tp to <lte> port l2tp
+
+#VETHER
+
+pass out quick on vether0 proto ospf

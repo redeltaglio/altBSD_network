@@ -1596,6 +1596,14 @@ function configuration {
 				echo "PF ruleset OK"
 			fi
 		;;
+		"pfikev1")
+			install -o root -g wheel -m 0640 $basedir/src/etc/pf.conf.ikev1 /etc/pf.conf
+			custom "/etc" "1"
+			pfctrl=$(pfctl -nf /etc/pf.conf)
+			if [[ -z $pfctrl ]]; then
+				echo "PF ruleset OK"
+			fi
+		;;
 		"ospf")
 			rcctl enable ospfd
 			install -o root -g wheel -m 0600  $basedir/src/etc/ospfd.conf /etc/
@@ -1838,7 +1846,7 @@ function ikechoose {
 
 			echo "configuring PF firewall and others environments \n"
 			if [[ $configini -eq 1 ]]; then
-				configuration "pf"
+				configuration "pfikev1"
 			else
 				ctrl=
 				while [ -z $ctrl ]
@@ -1846,7 +1854,7 @@ function ikechoose {
 					echo 'Go ahead type 1 '
 					read ctrl
 					if [[ "$ctrl" -eq 1 ]]; then
-						configuration "pf"
+						configuration "pfikev1"
 						echo "pf#$ctrl" >> /tmp/config.ini
 					else
 						error_exit "$LINENO: EXIT FROM USER."
