@@ -1952,7 +1952,7 @@ function ikechoose {
 				done
 			fi
 			echo "configuring Vultr VPC if present \n"
-			ksh "$basedir/$app" -A "vpcvultr"
+			ksh "$basedir/$app" -A "vultrvpc"
 			echo "configuring PF firewall and others environments \n"
 			if [[ $configini -eq 1 ]]; then
 				configuration "pfikev1"
