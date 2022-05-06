@@ -1632,6 +1632,15 @@ function configuration {
 				rcctl restart ospfd ||  error_exit "$LINENO: ERROR: OSPFD failed."
 			fi
 		;;
+		"ospfstub")
+			rcctl enable ospfd
+			install -o root -g wheel -m 0600  $basedir/src/etc/ospfdstub.conf /etc/ospfd.conf
+			sed -i "s/\/ROUTERID\//$routerid/g" /etc/ospfd.conf
+			sed -i "s/\/ROUTERIDLAST\//$routeridlast/g" /etc/ospfd.conf
+			ospfmd5=$(tr -cd '[:alnum:],.' < /dev/urandom | fold -w 15 | head -n 1)
+			sed -i "s/\/OSPFMD5\//${ospfmd5}/g" /etc/ospfd.conf
+
+		;;
 		"ntpd")
 			install -o root -g wheel -m 0644  $basedir/src/etc/ntpd.conf /etc/
 			cleanold "/etc/"
