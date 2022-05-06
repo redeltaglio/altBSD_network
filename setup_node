@@ -2229,7 +2229,7 @@ case $1 in
 					;;
 				esac
 			done
-		else
+		fi
 		ikechoose
 		echo "preparing archives, signing them, starting httpd default host and start the remote install procedure \n"
 		if [[ $configini -eq 1 ]]; then
