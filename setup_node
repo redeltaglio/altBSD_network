@@ -951,10 +951,11 @@ function admin {
 					echo "Type vio1 Vultr VPC assigned Netmask: [Netmask] "
 					read maskvpc
 				done
-				ifconfig vio1 "${ipvpc}" "${maskvpc}" up
+				ifconfig vio1 "${ipvpc}" netmask "${maskvpc}" up
 				echo "-inet" > /etc/hostname.vio1
 				echo "-inet6" >> /etc/hostname.vio1
-				echo "inet ${ipvpc} ${maskvpc}" >> /etc/hostname.vio1
+				echo "mtu 1450" >> /etc/hostname.vio1
+				echo "!ifconfig vio1 ${ipvpc} netmask ${maskvpc}" >> /etc/hostname.vio1
 				echo "up" >> /etc/hostname.vio1
  			)
 		;;
@@ -1684,7 +1685,6 @@ function configuration {
 		;;
 		"ospfstub")
 			rcctl enable ospfd
-			ksh "$basedir/$app" -A "vpcvultr"
 			install -o root -g wheel -m 0600  $basedir/src/etc/ospfdstub.conf /etc/ospfd.conf
 			sed -i "s/\/ROUTERID\//$routerid/g" /etc/ospfd.conf
 			sed -i "s/\/ROUTERIDLAST\//$routeridlast/g" /etc/ospfd.conf
@@ -1946,6 +1946,8 @@ function ikechoose {
 					fi
 				done
 			fi
+			echo "configuring Vultr VPC if present \n"
+			ksh "$basedir/$app" -A "vpcvultr"
 			echo "configuring PF firewall and others environments \n"
 			if [[ $configini -eq 1 ]]; then
 				configuration "pfikev1"
