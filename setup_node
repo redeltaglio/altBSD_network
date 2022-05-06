@@ -1597,8 +1597,10 @@ function configuration {
 			fi
 		;;
 		"pfikev1")
+			(: "${routeridlast?}") 2>/dev/null || routeridlast=$(echo $routerid | cut -d . -f4)
 			install -o root -g wheel -m 0640 $basedir/src/etc/pf.conf.ikev1 /etc/pf.conf
 			custom "/etc" "1"
+			sed -i "s/\/ROUTERIDLAST\//$routeridlast/g" /etc/pf.conf
 			pfctrl=$(pfctl -nf /etc/pf.conf)
 			if [[ -z $pfctrl ]]; then
 				echo "PF ruleset OK"
