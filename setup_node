@@ -1390,6 +1390,37 @@ function configuration {
 			custom "/etc" "1"
 			rcctl start iked ||  error_exit "$LINENO: ERROR: IKED failed."
 		;;
+		"isakmpd")
+			if [[ -e "/etc/ipsec.conf" ]]; then
+				rm -rf /etc/{isakmpd,ipsec.conf,ipsec.conf.*}
+			else
+				rm -rf /etc/isakmpd
+			fi
+			mkdir -p /etc/isakmpd/{ca,certs,crls,keynote,private,pubkeys}
+			mkdir -p /etc/ipsec/pubkeys/{ipv4,ipv6,fqdn,ufqdn}
+			if [ ! -f /etc/isakmpd/private/local.key ]; then
+			echo -n "openssl: generating isakmpd/iked RSA key... "
+			if openssl genrsa -out /etc/isakmpd/private/local.key 2048 \
+			    >/dev/null 2>&1; then
+				chmod 600 /etc/isakmpd/private/local.key
+				openssl rsa -out /etc/isakmpd/local.pub -in \
+				    /etc/isakmpd/private/local.key -pubout \
+				    >/dev/null 2>&1
+				echo done.
+			else
+				echo failed.
+			fi
+			cd $basedir
+			install -o root -g wheel -m 0600  $basedir/src/etc/ipsec.conf /etc/
+			ikev1psk=$(head -3 /dev/urandom | tr -cd '[:alnum:]' | cut -c -64)
+			sed -i "s/\/PUBLICIP\//$publicip/g" "/etc/ipsec.conf"
+			sed -i "s/\/ROUTERID\//$routerid/g" "/etc/ipsec.conf"
+			sed -i "s/\/IKEv1PSK\//$ikev1psk/g" "/etc/ipsec.conf"
+			rcctl enable ipsec
+			rcctl enable isakmpd
+			rcctl set isakmpd flags "-K"
+			rcctl start isakmpd ||  error_exit "$LINENO: ERROR: ISAKMPD failed."
+		;;
 		"gre")
 			if [[ -e "/etc/hostname.gre0" ]]; then
 				rm -rf /etc/hostname.gre*[0-9]
@@ -1723,6 +1754,109 @@ function configuration {
 	esac
 }
 
+function ikechoose {
+	local iketype=$(cat /tmp/config.ini | grep iketype | cut -d \# -f2)
+	case "${iketype}" in
+		1)
+			echo "configuring ipsec \
+				\nplease add ${publicip}/32 to \
+				\n/etc/pf.conf/table.ipsec \
+				\nto the others nodes and reload them! \
+				\n"
+			if [[ $configini -eq 1 ]]; then
+				configuration "ipsec"
+			else
+				ctrl=
+				while [ -z $ctrl ]
+				do
+					echo 'Go ahead type 1 '
+					read ctrl
+					if [[ "$ctrl" -eq 1 ]]; then
+						configuration "ipsec"
+						echo "ipsec#$ctrl" >> /tmp/config.ini
+					else
+						error_exit "$LINENO: EXIT FROM USER."
+					fi
+				done
+			fi
+			if [[ $configini -eq 1 ]]; then
+				configuration "gre"
+			else
+				echo "configuring gre interfaces \
+					\n"
+				ctrl=
+				while [ -z $ctrl ]
+				do
+					echo 'Go ahead type 1 '
+					read ctrl
+					if [[ "$ctrl" -eq 1 ]]; then
+						configuration "gre"
+						echo "gre#$ctrl" >> /tmp/config.ini
+					else
+						error_exit "$LINENO: EXIT FROM USER."
+					fi
+				done
+			fi
+
+			echo "configuring PF firewall and others environments \n"
+			if [[ $configini -eq 1 ]]; then
+				configuration "pf"
+			else
+				ctrl=
+				while [ -z $ctrl ]
+				do
+					echo 'Go ahead type 1 '
+					read ctrl
+					if [[ "$ctrl" -eq 1 ]]; then
+						configuration "pf"
+						echo "pf#$ctrl" >> /tmp/config.ini
+					else
+						error_exit "$LINENO: EXIT FROM USER."
+					fi
+				done
+			fi
+
+			echo "configuring OSPF routing protocol \n"
+			if [[ $configini -eq 1 ]]; then
+				configuration "ospf"
+			else
+				ctrl=
+				while [ -z $ctrl ]
+				do
+					echo 'Go ahead type 1 '
+					read ctrl
+					if [[ "$ctrl" -eq 1 ]]; then
+						configuration "ospf"
+						echo "ospf#$ctrl" >> /tmp/config.ini
+					else
+						error_exit "$LINENO: EXIT FROM USER."
+					fi
+				done
+			fi
+		;;
+		2)
+			echo "configuring Isakmpd for npppd L2TP access \
+				\n"
+			if [[ $configini -eq 1 ]]; then
+				configuration "isakmpd"
+			else
+				ctrl=
+				while [ -z $ctrl ]
+				do
+					echo 'Go ahead type 1 '
+					read ctrl
+					if [[ "$ctrl" -eq 1 ]]; then
+						configuration "isakmpd"
+						echo "isakmpd#$ctrl" >> /tmp/config.ini
+					else
+						error_exit "$LINENO: EXIT FROM USER."
+					fi
+				done
+			fi
+		;;
+	esac
+}
+
 case $1 in
 	"-I")
 		configini=
@@ -1997,82 +2131,27 @@ case $1 in
 				fi
 			done
 		fi
-		echo "configuring ipsec \
-			\nplease add ${publicip}/32 to \
-			\n/etc/pf.conf/table.ipsec \
-			\nto the others nodes and reload them! \
-			\n"
-		if [[ $configini -eq 1 ]]; then
-			configuration "ipsec"
-		else
-			ctrl=
-			while [ -z $ctrl ]
+		if [[ $configini -ne 1 ]]; then
+			iketype=
+			while [ -z $iketype ]
 			do
-				echo 'Go ahead type 1 '
-				read ctrl
-				if [[ "$ctrl" -eq 1 ]]; then
-					configuration "ipsec"
-					echo "ipsec#$ctrl" >> /tmp/config.ini
-				else
-					error_exit "$LINENO: EXIT FROM USER."
-				fi
+				echo 'Is the machine an OpenIKED or a Isakmpd host? [openiked|isakmpd] '
+				read iketype
+				case "${iketype}" in
+					"openiked")
+						echo "iketype#1" >> /tmp/config.ini
+					;;
+					"isakmpd")
+						echo "iketype#2" >> /tmp/config.ini
+					;;
+					*)
+						echo "type openiked or isakmpd"
+						continue
+					;;
+				esac
 			done
-		fi
-		if [[ $configini -eq 1 ]]; then
-			configuration "gre"
 		else
-			echo "configuring gre interfaces \
-				\n"
-			ctrl=
-			while [ -z $ctrl ]
-			do
-				echo 'Go ahead type 1 '
-				read ctrl
-				if [[ "$ctrl" -eq 1 ]]; then
-					configuration "gre"
-					echo "gre#$ctrl" >> /tmp/config.ini
-				else
-					error_exit "$LINENO: EXIT FROM USER."
-				fi
-			done
-		fi
-
-		echo "configuring PF firewall and others environments \n"
-		if [[ $configini -eq 1 ]]; then
-			configuration "pf"
-		else
-			ctrl=
-			while [ -z $ctrl ]
-			do
-				echo 'Go ahead type 1 '
-				read ctrl
-				if [[ "$ctrl" -eq 1 ]]; then
-					configuration "pf"
-					echo "pf#$ctrl" >> /tmp/config.ini
-				else
-					error_exit "$LINENO: EXIT FROM USER."
-				fi
-			done
-		fi
-
-		echo "configuring OSPF routing protocol \n"
-		if [[ $configini -eq 1 ]]; then
-			configuration "ospf"
-		else
-			ctrl=
-			while [ -z $ctrl ]
-			do
-				echo 'Go ahead type 1 '
-				read ctrl
-				if [[ "$ctrl" -eq 1 ]]; then
-					configuration "ospf"
-					echo "ospf#$ctrl" >> /tmp/config.ini
-				else
-					error_exit "$LINENO: EXIT FROM USER."
-				fi
-			done
-		fi
-
+		ikechoose
 		echo "preparing archives, signing them, starting httpd default host and start the remote install procedure \n"
 		if [[ $configini -eq 1 ]]; then
 			configuration "remote"
