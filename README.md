@@ -158,6 +158,14 @@ After the reboot login in the new node and change the password and upgrade the s
 
 #### [![OpenBSD MESH IPSec guerrila host](https://img.youtube.com/vi/6-M4IxeSctI/0.jpg)](https://www.youtube.com/watch?v=6-M4IxeSctI "OpenBSD MESH IPSec guerrila host")
 
+##### Notes about syspatch and version 7.1
+
+Notes from [deraadt@](https://www.theos.com/deraadt/) onto [errata71.html](https://www.openbsd.org/errata71.html):
+
+```bash
+# sed -i /release/d /usr/sbin/syspatch && syspatch -R && syspatch
+```
+
 #### First steps
 
 First of all I want to underline that we use some values in the `DNS` master zone of the domain where we want to attach our new `VPS` host. *It's not exactly all automatic*.
