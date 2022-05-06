@@ -166,6 +166,8 @@ Notes from [deraadt@](https://www.theos.com/deraadt/) onto [errata71.html](https
 # sed -i /release/d /usr/sbin/syspatch && syspatch -R && syspatch
 ```
 
+Or run syspatch another time after `001_wifi` install.
+
 #### First steps
 
 First of all I want to underline that we use some values in the `DNS` master zone of the domain where we want to attach our new `VPS` host. *It's not exactly all automatic*.
