@@ -1442,7 +1442,7 @@ function configuration {
 		"npppd")
 			(: "${routeridlast?}") 2>/dev/null || routeridlast=$(echo $routerid | cut -d . -f4)
 			cd $basedir
-			install -o root -g wheel -m 0600  $basedir/src/npppd.conf /etc/npppd
+			install -o root -g wheel -m 0600  $basedir/src/etc/npppd.conf /etc/npppd/
 			sed -i "s/\/RADIUSPSK\//$radiuspsk/g" "/etc/npppd/npppd.conf"
 			sed -i "s/\/PUBLICIP\//$publicip/g" "/etc/npppd/npppd.conf"
 			sed -i "s/\/ROUTERID\//$routerid/g" "/etc/npppd/npppd.conf"
