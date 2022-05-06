@@ -1690,7 +1690,12 @@ function configuration {
 			sed -i "s/\/ROUTERIDLAST\//$routeridlast/g" /etc/ospfd.conf
 			ospfmd5=$(tr -cd '[:alnum:],.' < /dev/urandom | fold -w 15 | head -n 1)
 			sed -i "s/\/OSPFMD5\//${ospfmd5}/g" /etc/ospfd.conf
-
+			pidof_ospfd=$(pidof "ospfd")
+			if [[ -z $pidof_ospfd ]]; then
+				rcctl start ospfd ||  error_exit "$LINENO: ERROR: OSPFD failed."
+			else
+				rcctl restart ospfd ||  error_exit "$LINENO: ERROR: OSPFD failed."
+			fi
 		;;
 		"ntpd")
 			install -o root -g wheel -m 0644  $basedir/src/etc/ntpd.conf /etc/
@@ -1982,6 +1987,7 @@ function ikechoose {
 					fi
 				done
 			fi
+			exit
 		;;
 	esac
 }
