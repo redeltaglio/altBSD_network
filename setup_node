@@ -1421,6 +1421,17 @@ function configuration {
 			rcctl set isakmpd flags "-K"
 			rcctl start isakmpd ||  error_exit "$LINENO: ERROR: ISAKMPD failed."
 		;;
+		"npppd")
+			(: "${routeridlast?}") 2>/dev/null || routeridlast=$(echo $routerid | cut -d . -f4)
+			cd $basedir
+			install -o root -g wheel -m 0600  $basedir/src/npppd.conf /etc/npppd
+			sed -i "s/\/RADIUSPSK\//$radiuspsk/g" "/etc/npppd/npppd.conf"
+			sed -i "s/\/PUBLICIP\//$publicip/g" "/etc/npppd/npppd.conf"
+			sed -i "s/\/ROUTERID\//$routerid/g" "/etc/npppd/npppd.conf"
+			sed -i "s/\/ROUTERIDLAST\//$routeridlast/g" "/etc/npppd/npppd.conf"
+			rcctl enable npppd
+			rcctl start npppd ||  error_exit "$LINENO: ERROR: NPPPD failed."
+		;;
 		"gre")
 			if [[ -e "/etc/hostname.gre0" ]]; then
 				rm -rf /etc/hostname.gre*[0-9]
@@ -1848,6 +1859,62 @@ function ikechoose {
 					if [[ "$ctrl" -eq 1 ]]; then
 						configuration "isakmpd"
 						echo "isakmpd#$ctrl" >> /tmp/config.ini
+					else
+						error_exit "$LINENO: EXIT FROM USER."
+					fi
+				done
+			fi
+			radiuspsk=
+			while [ -z $radiuspsk ]
+			do
+				echo 'Type RADIUS psk '
+				read radiuspsk
+			done
+			if [[ $configini -eq 1 ]]; then
+				configuration "npppd"
+			else
+				ctrl=
+				while [ -z $ctrl ]
+				do
+					echo 'Go ahead type 1 '
+					read ctrl
+					if [[ "$ctrl" -eq 1 ]]; then
+						configuration "npppd"
+						echo "npppd#$ctrl" >> /tmp/config.ini
+					else
+						error_exit "$LINENO: EXIT FROM USER."
+					fi
+				done
+			fi
+			echo "configuring PF firewall and others environments \n"
+			if [[ $configini -eq 1 ]]; then
+				configuration "pf"
+			else
+				ctrl=
+				while [ -z $ctrl ]
+				do
+					echo 'Go ahead type 1 '
+					read ctrl
+					if [[ "$ctrl" -eq 1 ]]; then
+						configuration "pf"
+						echo "pf#$ctrl" >> /tmp/config.ini
+					else
+						error_exit "$LINENO: EXIT FROM USER."
+					fi
+				done
+			fi
+			echo "configuring OSPF STUB router \n"
+			if [[ $configini -eq 1 ]]; then
+				configuration "ospfstub"
+			else
+				ctrl=
+				while [ -z $ctrl ]
+				do
+					echo 'Go ahead type 1 '
+					read ctrl
+					if [[ "$ctrl" -eq 1 ]]; then
+						configuration "ospfstub"
+						echo "ospfstub#$ctrl" >> /tmp/config.ini
 					else
 						error_exit "$LINENO: EXIT FROM USER."
 					fi
