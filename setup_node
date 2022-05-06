@@ -1390,6 +1390,7 @@ function configuration {
 			custom "/etc" "1"
 			rcctl start iked ||  error_exit "$LINENO: ERROR: IKED failed."
 		;;
+
 		"isakmpd")
 			if [[ -e "/etc/ipsec.conf" ]]; then
 				rm -rf /etc/{isakmpd,ipsec.conf,ipsec.conf.*}
@@ -1399,16 +1400,17 @@ function configuration {
 			mkdir -p /etc/isakmpd/{ca,certs,crls,keynote,private,pubkeys}
 			mkdir -p /etc/ipsec/pubkeys/{ipv4,ipv6,fqdn,ufqdn}
 			if [ ! -f /etc/isakmpd/private/local.key ]; then
-			echo -n "openssl: generating isakmpd/iked RSA key... "
-			if openssl genrsa -out /etc/isakmpd/private/local.key 2048 \
-			    >/dev/null 2>&1; then
-				chmod 600 /etc/isakmpd/private/local.key
-				openssl rsa -out /etc/isakmpd/local.pub -in \
-				    /etc/isakmpd/private/local.key -pubout \
-				    >/dev/null 2>&1
-				echo done.
-			else
-				echo failed.
+				echo -n "openssl: generating isakmpd/iked RSA key... "
+				if openssl genrsa -out /etc/isakmpd/private/local.key 2048 \
+				    >/dev/null 2>&1; then
+					chmod 600 /etc/isakmpd/private/local.key
+					openssl rsa -out /etc/isakmpd/local.pub -in \
+					    /etc/isakmpd/private/local.key -pubout \
+					    >/dev/null 2>&1
+					echo done.
+				else
+					echo failed.
+				fi
 			fi
 			cd $basedir
 			install -o root -g wheel -m 0600  $basedir/src/etc/ipsec.conf /etc/
@@ -1420,6 +1422,7 @@ function configuration {
 			rcctl enable isakmpd
 			rcctl set isakmpd flags "-K"
 			rcctl start isakmpd ||  error_exit "$LINENO: ERROR: ISAKMPD failed."
+
 		;;
 		"npppd")
 			(: "${routeridlast?}") 2>/dev/null || routeridlast=$(echo $routerid | cut -d . -f4)
