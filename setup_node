@@ -964,7 +964,7 @@ function admin {
 				echo "Do you want to add the interface to OSPFD? [yes/no] "
 				read ctrl
 			done
-			case $ctrl in:
+			case $ctrl in
 				"yes")
 					ospfvio1md5=
 					while [ -z $ospfvio1md5 ]
@@ -973,7 +973,20 @@ function admin {
 						read ospfvio1md5
 					done
 					sed -i '$d' /etc/ospfd.conf
-					
+					cat << EOF >> /etc/ospfd.conf
+					interface vio1 {
+					auth-type crypt
+EOF
+				    echo "auth-md 1 \"${ospfvio1md5}\"" >> /etc/ospfd.conf
+					cat << EOF >> /etc/ospfd.conf
+				        auth-md-keyid 1
+				        router-dead-time 40
+						hello-interval 10
+						retransmit-interval 5
+						transmit-delay 1
+					}
+				}
+EOF
 					pidof_ospfd=$(pidof "ospfd")
 					if [[ -z $pidof_ospfd ]]; then
 						rcctl start ospfd ||  error_exit "$LINENO: ERROR: OSPFD failed."
