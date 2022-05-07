@@ -964,7 +964,7 @@ function admin {
 				echo "Do you want to add the interface to OSPFD? [yes/no] "
 				read ctrl
 			done
-			case "${ctrl}" in:
+			case $ctrl in:
 				"yes")
 					ospfvio1md5=
 					while [ -z $ospfvio1md5 ]
