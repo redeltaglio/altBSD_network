@@ -24,6 +24,7 @@
 set block-policy drop
 set skip on lo
 set skip on pair
+set skip on vio1
 set block-policy drop
 set loginterface egress
 set loginterface gre
@@ -34,7 +35,6 @@ set timeout { other.first 20, other.multiple 20, other.single 10 }
 
 #VARIABLES
 ext_if="vio0"
-int_if="vio1"
 
 include "/etc/pf.conf.macro.public"
 
