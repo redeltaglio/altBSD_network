@@ -31,6 +31,7 @@
 # https://github.com/banesullivan/localtileserver
 # https://zx2c4.com/ip
 # vnstat: https://humdi.net/vnstat/
+# FQ-codel: https://help.ui.com/hc/en-us/articles/220716608-EdgeRouter-Quality-of-Service-QoS-Advanced-Queue
 
 #####
 #
