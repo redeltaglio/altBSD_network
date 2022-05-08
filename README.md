@@ -2139,9 +2139,11 @@ Remember that you can use also iperf or others tools to size it. Next you can si
 
 ![](https://raw.githubusercontent.com/redeltaglio/OpenBSD/master/img/dslreport.png)
 
-Deep packet inspection.
+#### Deep packet inspection packet DSCP classification in GRE transit.
 
 ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/tos_dscp.png)
+
+![](https://github.com/redeltaglio/OpenBSD/raw/master/img/tos_dscp_2.png)
 
 #### OSPF timings
 
