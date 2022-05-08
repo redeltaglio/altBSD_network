@@ -2139,6 +2139,10 @@ Remember that you can use also iperf or others tools to size it. Next you can si
 
 ![](https://raw.githubusercontent.com/redeltaglio/OpenBSD/master/img/dslreport.png)
 
+Deep packet inspection.
+
+![](https://github.com/redeltaglio/OpenBSD/raw/master/img/tos_dscp.png)
+
 #### OSPF timings
 
 ![](https://raw.githubusercontent.com/redeltaglio/OpenBSD/master/img/ospf-timers-guide-table.webp)
