@@ -1,0 +1,162 @@
+#!/bin/bash
+
+WORK_DIR=$(mktemp -d)
+DL_URI=dl.ubnt.com/firmwares/edgemax/dpi/0001
+SIG_FILE=rule.tar
+SIG_MD5_FILE=rule.tar.md5sum
+DATA_DIR=/etc/ubnt/tdts
+DPI_ENABLE_ADK=/proc/cavium/ipv4/dpi
+DPI_ENABLE_NF=/proc/nf_dpi/dpi
+SIG_XML_FILE=rule.xml
+SIG_TRF_FILE=rule.trf
+
+exit_cleanup ()
+{
+   rc=$?
+   popd > /dev/null
+   rm -rf ${WORK_DIR}
+   exit $rc
+}
+
+trap exit_cleanup EXIT
+
+new_sigs_avail ()
+{
+  curl -s -L -o ${SIG_MD5_FILE} https://${DL_URI}/${SIG_MD5_FILE}
+  if [ $? != 0 ]; then
+    echo "Error downloading MD5 signature file" >& 2
+    exit 1
+  fi
+
+  if [ ! -e "${DATA_DIR}/${SIG_MD5_FILE}" ]; then
+    echo -n yes
+    return 0
+  fi
+
+  result=$(diff "${DATA_DIR}/${SIG_MD5_FILE}" "${SIG_MD5_FILE}")
+  if [ $? == 0 ]; then
+    echo -n no
+    return 0
+  else
+    curl -s -L -o ${SIG_FILE} https://${DL_URI}/${SIG_FILE}
+    tar -xf ${SIG_FILE} ${SIG_XML_FILE}
+    STR_CUR=`grep -r -m1 "version major" ${DATA_DIR}/${SIG_XML_FILE}`
+    MAJOR_CUR=`echo $STR_CUR | awk -F 'version major="' '{print $2}' | cut -d '"' -f 1`
+    MINOR_CUR=`echo $STR_CUR | awk -F'minor="' '{print $2}' | cut -d '"' -f 1`
+    VER_CUR=$MAJOR_CUR$MINOR_CUR
+    STR_NEW=`grep -r -m1 "version major" $SIG_XML_FILE`
+    MAJOR_NEW=`echo $STR_NEW | awk -F 'version major="' '{print $2}' | cut -d '"' -f 1`
+    MINOR_NEW=`echo $STR_NEW | awk -F'minor="' '{print $2}' | cut -d '"' -f 1`
+    VER_NEW=$MAJOR_NEW$MINOR_NEW
+
+    if [ "$VER_CUR" -ge "$VER_NEW" ]; then
+      echo -n no
+    else
+      echo -n yes
+    fi
+    return 0
+  fi
+}
+
+get_new_sigs ()
+{
+   curl -s -L -o ${SIG_FILE} https://${DL_URI}/${SIG_FILE} > /dev/null
+   if [ $? != 0 ]; then
+      echo "Error downloading new signature file"
+      exit 1
+   fi
+   return 0
+}
+
+validate_md5 ()
+{
+   if md5sum -c ${SIG_MD5_FILE} >&/dev/null; then
+      echo "New signature downloaded successfully"
+   else
+      echo "New signature file does not match MD5 checksum"
+      exit 1
+   fi
+}
+
+################
+hasDpi=$(/usr/sbin/ubnt-hal hasDpi)
+if [ "$hasDpi" != 1 ]; then
+    echo "Platform does not support DPI"
+    exit 1
+fi
+hasAdk=$(/usr/sbin/ubnt-hal hasAdk)
+
+pushd ${WORK_DIR} > /dev/null
+
+YESNO=$(new_sigs_avail)
+if [ "${YESNO}" != "yes" ]; then
+   echo No new signatures available
+   exit 0
+fi
+
+get_new_sigs
+
+validate_md5
+
+tar -xf ${SIG_FILE} ${SIG_XML_FILE}
+tar -xf ${SIG_FILE} ${SIG_TRF_FILE}
+if [ ! -f ${SIG_XML_FILE} ] || [ ! -f ${SIG_TRF_FILE} ]; then
+   echo Invalid signature file
+   exit 1
+fi
+
+cp ${SIG_XML_FILE} ${SIG_TRF_FILE} $DATA_DIR
+cp ${SIG_MD5_FILE} ${DATA_DIR}
+
+if [ "$hasAdk" == 1 ] && [ -e ${DPI_ENABLE_ADK} ]; then
+   old_val_adk=$(cat ${DPI_ENABLE_ADK})
+else
+   old_val_adk=0
+fi
+
+if [ -e ${DPI_ENABLE_NF} ]; then
+   old_val_nf=$(cat ${DPI_ENABLE_NF})
+else
+   old_val_nf=0
+fi
+
+if [ "$old_val_adk" != 1 ] && [ "$old_val_nf" != 1 ]; then
+   echo "DPI currently not enabled"
+else
+   echo "Disabling DPI engine"
+   if [ "$hasAdk" == 1 ] && [ "$old_val_adk" == 1 ]; then
+      echo 0 > ${DPI_ENABLE_ADK}
+   fi
+   if [ "$old_val_nf" == 1 ]; then
+      echo 0 > ${DPI_ENABLE_NF}
+   fi
+fi
+
+echo Loading new application names
+/usr/sbin/ubnt-hal dpiLoadApps /etc/ubnt/tdts/${SIG_XML_FILE}
+
+if [ "$?" != 0 ]; then
+    logger -t DPI -s "Error: loading application names"
+    exit 1
+fi
+
+echo Loading new signatures
+/usr/sbin/tdts_rule_agent -r /etc/ubnt/tdts/${SIG_TRF_FILE} >/dev/null 2>&1
+if [ "$?" != 0 ]; then
+    logger -t DPI -s "Error: loading signatures"
+    exit 1
+fi
+
+if [ "$old_val_adk" == 1 ]; then
+   echo "Enabling DPI Engine offload"
+   echo 1 > ${DPI_ENABLE_ADK}
+fi
+
+if [ "$old_val_nf" == 1 ]; then
+   echo "Enabling DPI Engine netfilter"
+   echo 1 > ${DPI_ENABLE_NF}
+fi
+
+logger -t DPI -s "Signatures update ok"
+
+exit 0

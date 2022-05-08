@@ -952,6 +952,7 @@ function admin {
 					read maskvpc
 				done
 				ifconfig vio1 "${ipvpc}" netmask "${maskvpc}" up
+				ifconfig vio1 mtu 1450
 				echo "-inet" > /etc/hostname.vio1
 				echo "-inet6" >> /etc/hostname.vio1
 				echo "mtu 1450" >> /etc/hostname.vio1
@@ -984,6 +985,7 @@ EOF
 						hello-interval 10
 						retransmit-interval 5
 						transmit-delay 1
+						type p2p
 					}
 				}
 EOF
