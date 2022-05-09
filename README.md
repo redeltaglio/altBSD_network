@@ -2221,7 +2221,22 @@ root@arnuwanda:/etc#
 
 Remember that we're speaking about packet scheduler for the WISP appliance that is running on our infrastructure. Next that we've regulated the download from the clients, we've got to do the same for the upload that is a little bit heavier but nothing special at all.
 
-First we define a general queue above egress interface but not default because we don't want to schedule  `esp` traffic as we already do this into inside not encrypted virtual interfaces.
+First we define a general queue above egress interface, next a `internet` one will use HFSC and two leafs one with all the traffic, the `default` one, and the other only with the traffic that was tagged by pf as upload from clients:
+
+```bash
+queue eque on vio0 bandwidth 800M
+queue internet parent eque bandwidth 240M min 240M max 240M 
+queue users parent internet bandwidth 55M max 60M flows 6144 qlimit 1024
+queue sbok parent internet bandwidth 150M default
+```
+
+![](https://github.com/redeltaglio/OpenBSD/raw/master/img/systat_afteregress.png)
+
+As you can see queues are nested below the one called `eque`.
+
+Results are astonishing:
+
+![](https://github.com/redeltaglio/OpenBSD/raw/master/img/bufferbloat_afterqueueing.png)
 
 #### Deep packet inspection packet DSCP classification in GRE transit.
 
