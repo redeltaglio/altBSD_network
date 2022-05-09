@@ -2147,7 +2147,7 @@ Be careful because in OpenBSD could be difficult to understand if we're using FQ
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/upload-fq-codel.png) | ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/cdf-fq-codel.png) |
 | ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/upload-hfsc.png) | ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/cdf-hfsc.png) |
-| https://github.com/redeltaglio/OpenBSD/raw/master/img/upload-hfsc-fq.png | https://github.com/redeltaglio/OpenBSD/raw/master/img/cdf-hfsc-fq.png |
+| ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/upload-hfsc-fq.png) | ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/cdf-hfsc-fq.png) |
 
 At the end of our `pf.conf` file we add a `macro` referencing another text file called `pf.conf.macro.queue.out`:
 
