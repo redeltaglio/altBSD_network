@@ -2139,7 +2139,15 @@ Remember that you can use also iperf or others tools to size it. Next you can si
 
 ![](https://raw.githubusercontent.com/redeltaglio/OpenBSD/master/img/dslreport.png)
 
-We apply [FQ-codel](https://github.com/redeltaglio/OpenBSD/raw/master/rfc/rfc8290.txt) packet scheduler and active queue management [OpenBSD implementation](https://github.com/openbsd/src/blob/master/sys/net/fq_codel.c) to output interfaces, better saying above gre(4) interfaces without classifying traffic and above egress interface doing pf tagging.
+We apply [FQ-codel](https://github.com/redeltaglio/OpenBSD/raw/master/rfc/rfc8290.txt) packet scheduler and active queue management [OpenBSD implementation](https://github.com/openbsd/src/blob/master/sys/net/fq_codel.c) and [HFSC](https://github.com/redeltaglio/OpenBSD/raw/master/pdf/SIGCOM97.pdf) for link sharing [OpenBSD implementation](https://github.com/mbelop/src/blob/master/sys/net/hfsc.c) to output interfaces, better saying above gre(4) interfaces without classifying traffic and above egress interface doing pf tagging.
+
+Be careful because in OpenBSD could be difficult to understand if we're using FQ-codel, HFSC or the twos together. Using the configuration key `flows` activate FQ-Codle, `bandwidth` and `max` HFSC; some [academic comparisons](http://theapt.org/~mike/hfsc-fq/), as you can see only upload is sized ([PRIQ](https://flylib.com/books/en/2.717.1.250/1/) is default packet scheduler):
+
+| ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/upload-priq.png) | ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/cdf-priq.png) |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/upload-fq-codel.png) | ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/cdf-fq-codel.png) |
+| ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/upload-hfsc.png) | ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/cdf-hfsc.png) |
+| https://github.com/redeltaglio/OpenBSD/raw/master/img/upload-hfsc-fq.png | https://github.com/redeltaglio/OpenBSD/raw/master/img/cdf-hfsc-fq.png |
 
 At the end of our `pf.conf` file we add a `macro` referencing another text file called `pf.conf.macro.queue.out`:
 
