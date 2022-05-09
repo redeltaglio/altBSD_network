@@ -2199,6 +2199,18 @@ queue outq on gre5 flows 6144 bandwidth 55M, max 60M default qlimit 1024
   [ measured:   898.8 packets/s, 7.37Mb/s ]
 ```
 
+And with [systat](https://dataswamp.org/~solene/2021-08-30-openbsd-qos-lan.html#_How_to_monitor) the result is:
+
+![](https://github.com/redeltaglio/OpenBSD/raw/master/img/systat_queue.png)
+
+You can see that we've got some dropped packets and dropped bytes. In that case is important to take care of the number of flows. Using pfctl and some korn shell foo we can know how many flows are used:
+
+```bash
+root@arnuwanda:/etc# pfctl -ss | wc -l 
+    3147
+root@arnuwanda:/etc# 
+```
+
 
 
 #### Deep packet inspection packet DSCP classification in GRE transit.
