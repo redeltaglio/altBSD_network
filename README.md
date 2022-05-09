@@ -2157,6 +2157,48 @@ root@arnuwanda:/etc#
 
 Let's see what is the meaning using the section [QUEUEING](https://man.openbsd.org/pf.conf#QUEUEING) of the `pf.conf` man page.
 
+- `default`: packet that doesn't match other queue pass that one.
+- `on int.`: where does the queue act.
+- `qlimit`: maximum number of IP packet queued. Default is `50`
+- `flows`: when packets are classified by the [stateful inspection engine](https://man.openbsd.org/pf.conf#STATEFUL_FILTERING), a flow identifier is assigned to all packets belonging to the state. Maximum is `32767`.
+
+We've got to tools to take under control our queue system, [pfctl(8)](https://man.openbsd.org/pfctl.8) and [systat(1)](https://man.openbsd.org/systat.1).
+
+```bash
+root@arnuwanda:/etc# pfctl -sq -v  
+queue outq on gre1 flows 6144 bandwidth 55M, max 60M default qlimit 1024
+  [ pkts:      36770  bytes:    6662096  dropped pkts:      0 bytes:      0 ]
+  [ qlength:   0/1024 ]
+queue outq on gre2 flows 6144 bandwidth 55M, max 60M default qlimit 1024
+  [ pkts:      66551  bytes:    6437852  dropped pkts:      0 bytes:      0 ]
+  [ qlength:   0/1024 ]
+queue outq on gre3 flows 6144 bandwidth 55M, max 60M default qlimit 1024
+  [ pkts:      69775  bytes:    7021552  dropped pkts:      0 bytes:      0 ]
+  [ qlength:   0/1024 ]
+queue outq on gre4 flows 6144 bandwidth 55M, max 60M default qlimit 1024
+  [ pkts:      61918  bytes:    6521360  dropped pkts:      0 bytes:      0 ]
+  [ qlength:   0/1024 ]
+queue outq on gre5 flows 6144 bandwidth 55M, max 60M default qlimit 1024
+  [ pkts:   29161132  bytes: 32367471407  dropped pkts:   1253 bytes: 1679020 ]
+  [ qlength:   0/1024 ]
+queue outq on gre6 flows 6144 bandwidth 55M, max 60M default qlimit 1024
+  [ pkts:      63361  bytes:    6638648  dropped pkts:      0 bytes:      0 ]
+  [ qlength:   0/1024 ]
+queue outq on gre7 flows 6144 bandwidth 55M, max 60M default qlimit 1024
+  [ pkts:      56637  bytes:    6607256  dropped pkts:      0 bytes:      0 ]
+  [ qlength:   0/1024 ]
+root@arnuwanda:/etc# 
+```
+
+We can use with `-vv` to got a live update with bandwidth consumption:
+
+```bash
+queue outq on gre5 flows 6144 bandwidth 55M, max 60M default qlimit 1024
+  [ pkts:   29205017  bytes: 32415555285  dropped pkts:   1253 bytes: 1679020 ]
+  [ qlength:   0/1024 ]
+  [ measured:   898.8 packets/s, 7.37Mb/s ]
+```
+
 
 
 #### Deep packet inspection packet DSCP classification in GRE transit.
