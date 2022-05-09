@@ -2211,7 +2211,9 @@ root@arnuwanda:/etc# pfctl -ss | wc -l
 root@arnuwanda:/etc# 
 ```
 
+Remember that we're speaking about packet scheduler for the WISP appliance that is running on our infrastructure. Next that we've regulated the download from the clients, we've got to do the same for the upload that is a little bit heavier but nothing special at all.
 
+First we define a general queue above egress interface but not default because we don't want to schedule  `esp` traffic as we already do this into inside not encrypted virtual interfaces.
 
 #### Deep packet inspection packet DSCP classification in GRE transit.
 
