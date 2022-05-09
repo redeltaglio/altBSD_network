@@ -2099,7 +2099,7 @@ A couple of advisors:
 - We denied gre traffic onto egress interface, but in [enc(4)](https://man.openbsd.org/enc.4) pseudo device. 
 - We use 1/3 default pf state timeout for gre protocol  `set timeout { other.first 20, other.multiple 20, other.single 10 }  `.
 
-#### Queue, nDPI and DSCP marking
+#### Queueing and FQ-Codel packet scheduler.
 
 ![](https://miro.medium.com/max/1400/1*1Siq7wg78OpNs58Znvu_sw.png)
 
@@ -2138,6 +2138,26 @@ Remember that you can use also iperf or others tools to size it. Next you can si
 ![](https://raw.githubusercontent.com/redeltaglio/OpenBSD/master/img/speedtest.png)
 
 ![](https://raw.githubusercontent.com/redeltaglio/OpenBSD/master/img/dslreport.png)
+
+We apply [FQ-codel](https://github.com/redeltaglio/OpenBSD/raw/master/rfc/rfc8290.txt) packet scheduler and active queue management [OpenBSD implementation](https://github.com/openbsd/src/blob/master/sys/net/fq_codel.c) to output interfaces, better saying above gre(4) interfaces without classifying traffic and above egress interface doing pf tagging.
+
+At the end of our `pf.conf` file we add a `macro` referencing another text file called `pf.conf.macro.queue.out`:
+
+```bash
+root@arnuwanda:/etc# cat pf.conf.macro.queue.out                                                                                     
+queue outq on gre1 bandwidth 55M max 60M flows 6144 qlimit 1024 default
+queue outq on gre2 bandwidth 55M max 60M flows 6144 qlimit 1024 default
+queue outq on gre3 bandwidth 55M max 60M flows 6144 qlimit 1024 default
+queue outq on gre4 bandwidth 55M max 60M flows 6144 qlimit 1024 default
+queue outq on gre5 bandwidth 55M max 60M flows 6144 qlimit 1024 default
+queue outq on gre6 bandwidth 55M max 60M flows 6144 qlimit 1024 default
+queue outq on gre7 bandwidth 55M max 60M flows 6144 qlimit 1024 default
+root@arnuwanda:/etc# 
+```
+
+Let's see what is the meaning using the section [QUEUEING](https://man.openbsd.org/pf.conf#QUEUEING) of the `pf.conf` man page.
+
+
 
 #### Deep packet inspection packet DSCP classification in GRE transit.
 
