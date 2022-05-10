@@ -480,7 +480,7 @@ vio0:
 taglio@ganesha:/home/taglio/Work/telecomlobby.com/bin$ 
 ```
 
-#### Hurricane Electric 
+#### Tunnel brokers 
 
 ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/he.png)
 
@@ -493,6 +493,8 @@ Type the IPv6 /128 of the  local gif interface 2001:470:1f22:486::2
 Type the IPv6 /128 of the Hurricane Electric endpoint 2001:470:1f22:486::1 
 Type the IPv6 endpoint from the /64 routed from the Hurricane Electric tunnel 2001:470:1f23:486::1 
 ```
+
+
 
 #### Login and start the connection process
 
@@ -2237,6 +2239,8 @@ As you can see queues are nested below the one called `eque`.
 Results are astonishing:
 
 ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/bufferbloat_afterqueueing.png)
+
+But there is a problem. Packet that are classified as `default` are scheduled two times. In the `default` queue we `esp` traffic and inside the gre tunnel we schedule another time. How can we dial with that problem? Answer is one, and it is called [rdomain(4)](https://man.openbsd.org/rdomain.4).
 
 #### Deep packet inspection packet DSCP classification in GRE transit.
 
