@@ -494,7 +494,7 @@ Type the IPv6 /128 of the Hurricane Electric endpoint 2001:470:1f22:486::1
 Type the IPv6 endpoint from the /64 routed from the Hurricane Electric tunnel 2001:470:1f23:486::1 
 ```
 
-
+![](https://github.com/redeltaglio/OpenBSD/raw/master/img/tunnelbroker_ch.png)
 
 #### Login and start the connection process
 
@@ -2240,7 +2240,96 @@ Results are astonishing:
 
 ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/bufferbloat_afterqueueing.png)
 
-But there is a problem. Packet that are classified as `default` are scheduled two times. In the `default` queue we `esp` traffic and inside the gre tunnel we schedule another time. How can we dial with that problem? Answer is one, and it is called [rdomain(4)](https://man.openbsd.org/rdomain.4).
+But there is a problem. Packet that are classified as `default` are scheduled two times. In the `default` queue we've got  `esp` traffic and inside the gre tunnel we schedule another time. How can we dial with that problem? Answer is one, and it is called [rdomain(4)](https://man.openbsd.org/rdomain.4), as we've discussed above. We use the virtual ethernet interface [pair(4)](https://man.openbsd.org/pair.4) to schedule upload from clients:
+
+```bash
+root@shiva:/etc# cat hostname.gre1                                                                                                                                                                                                              
+description "spr.telecomlobby.com"
+rdomain 1
+tunneldomain 0
+mtu 1392
+!ifconfig gre1 inet 10.10.10.234 10.10.10.233 netmask 0xfffffffc
+tunnel 139.180.206.19 2.139.174.201
+up
+root@shiva:/etc# cat hostname.lo1                                                                                                                                                                                                                                                        
+rdomain 1
+inet 127.0.0.1 0xff000000
+inet6 ::1
+up
+!route -T 1 add 224/4 127.0.0.1
+!route -T 1 add 127/8 127.0.0.1
+!route -T 1 add ::/96 ::1
+!route -T 1 add ::ffff:0.0.0.0/96 ::1
+root@shiva:/etc# 
+
+root@shiva:/etc# cat hostname.pair1
+description "gw-pair-1"
+rdomain 1
+inet 10.200.21.2/30
+patch pair0
+!/sbin/route -T 1 -qn add default 10.200.21.1
+
+root@shiva:/etc# cat hostname.pair0 
+description "gw-pair-0"
+rdomain 0
+inet 10.200.21.1/30
+!/sbin/route -n add 10.0.0.0/8 10.200.21.2
+!/sbin/route -n add 172.16.0.0/12 10.200.21.2
+!/sbin/route -n add 192.168.0.0/16 10.200.21.2
+
+root@shiva:/etc# cat pf.conf.macro.queue.out | grep pair                                                                                                                                                                                                                           
+queue outq on pair1 bandwidth 55M max 60M flows 6144 qlimit 6144 default
+root@shiva:/etc# 
+
+```
+
+Result seems to be insane but is fantastic:
+
+```bash
+root@shiva:/etc# pfctl -sq -v                                                                                                                                                                                                                                                            
+queue outq on gre1 flows 6144 bandwidth 55M, max 60M default qlimit 6144
+  [ pkts:      79478  bytes:   46732707  dropped pkts:      0 bytes:      0 ]
+  [ qlength:   0/6144 ]
+queue outq on gre10 flows 6144 bandwidth 55M, max 60M default qlimit 6144
+  [ pkts:        350  bytes:      28000  dropped pkts:      0 bytes:      0 ]
+  [ qlength:   0/6144 ]
+queue outq on gre11 flows 6144 bandwidth 55M, max 60M default qlimit 6144
+  [ pkts:        350  bytes:      28000  dropped pkts:      0 bytes:      0 ]
+  [ qlength:   0/6144 ]
+queue outq on gre12 flows 6144 bandwidth 55M, max 60M default qlimit 6144
+  [ pkts:       1040  bytes:     335520  dropped pkts:      0 bytes:      0 ]
+  [ qlength:   0/6144 ]
+queue outq on gre13 flows 6144 bandwidth 55M, max 60M default qlimit 6144
+  [ pkts:        350  bytes:      28000  dropped pkts:      0 bytes:      0 ]
+  [ qlength:   0/6144 ]
+queue outq on gre15 flows 6144 bandwidth 55M, max 60M default qlimit 6144
+  [ pkts:       1357  bytes:     424296  dropped pkts:      0 bytes:      0 ]
+  [ qlength:   0/6144 ]
+queue outq on gre2 flows 6144 bandwidth 55M, max 60M default qlimit 6144
+  [ pkts:       4613  bytes:     599968  dropped pkts:      0 bytes:      0 ]
+  [ qlength:   0/6144 ]
+queue outq on gre3 flows 6144 bandwidth 55M, max 60M default qlimit 6144
+  [ pkts:       1442  bytes:     428528  dropped pkts:      0 bytes:      0 ]
+  [ qlength:   0/6144 ]
+queue outq on gre4 flows 6144 bandwidth 55M, max 60M default qlimit 6144
+  [ pkts:       3725  bytes:     585340  dropped pkts:      0 bytes:      0 ]
+  [ qlength:   0/6144 ]
+queue outq on gre6 flows 6144 bandwidth 55M, max 60M default qlimit 6144
+  [ pkts:       3851  bytes:     551916  dropped pkts:      0 bytes:      0 ]
+  [ qlength:   0/6144 ]
+queue outq on gre9 flows 6144 bandwidth 55M, max 60M default qlimit 6144
+  [ pkts:       3888  bytes:     587640  dropped pkts:      0 bytes:      0 ]
+  [ qlength:   0/6144 ]
+queue outq on pair1 flows 6144 bandwidth 55M, max 60M default qlimit 6144
+  [ pkts:      67327  bytes:    9658322  dropped pkts:      0 bytes:      0 ]
+  [ qlength:   0/6144 ]
+root@shiva:/etc# 
+
+```
+
+
+
+
 
 #### Deep packet inspection packet DSCP classification in GRE transit.
 
