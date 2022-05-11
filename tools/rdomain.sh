@@ -63,7 +63,7 @@ inet 10.200.21.1/30
 !/sbin/route -n add 172.16.0.0/12 10.200.21.2
 !/sbin/route -n add 192.168.0.0/16 10.200.21.2
 EOF
-            echo "queue outq on pair${i} bandwidth 55M max 60M flows 6144 qlimit 6144 default" >> "/etc/pf.conf.macro.queue.out"
+
         ;;
         1)
         cat << EOF > "${hp}"
@@ -73,6 +73,7 @@ inet 10.200.21.2/30
 patch pair0
 !/sbin/route -T 1 -qn add default 10.200.21.1
 EOF
+        echo "queue outq on pair${i} bandwidth 55M max 60M flows 6144 qlimit 6144 default" >> "/etc/pf.conf.macro.queue.out"
         ;;
     esac
     install -o root -g wheel -m 0640 "${hp}"  "/etc/hostname.pair${i}"
