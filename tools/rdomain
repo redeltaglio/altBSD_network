@@ -108,3 +108,12 @@ rcctl set ospfd rtable 1
     install -o root -g _nsd -m 0640 ${nt} "/var/nsd/etc/nsd.conf"
     rm -rf ${nt}
 )
+
+ln -s /etc/rc.d/unbound /etc/rc.d/unbound1
+rcctl enable unbound1
+rcctl set unbound1 rtable 1
+[[ -e "/etc/rc.shutdown" ]] || (
+    echo "echo \"nameserver 8.8.8.8\" >> /etc/resolv.conf" > /etc/rc.shutdown
+    sed -i "/8.8.8.8/d" /etc/resolv.conf
+    echo "sed -i \"/8.8.8.8/d\" /etc/resolv.conf" >> /etc/rc.local
+)
