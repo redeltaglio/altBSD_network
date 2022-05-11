@@ -1,0 +1,102 @@
+#!/bin/ksh
+
+
+routerid=$(ifconfig vether0 | tail -n 1 | awk '{print $2}')
+md5nsdconf="5b878e86600303332a49da91071eda8a"
+
+echo "#FQ-Codel and HFSC OpenBSD packet schedulers." > "/etc/pf.conf.macro.queue.out"
+echo "#if link broken reply on the same interface" > "/etc/pf.conf.gre.tag.in"
+
+
+for g in $(ifconfig gre | grep gre*[0-9] | cut -d : -f1); do
+    hg=$(mktemp)
+    sed -i "/keepalive/d" "/etc/hostname.${g}"
+    sed -i "/rtlabel/d" "/etc/hostname.${g}"
+    sed -i "/route/d" "/etc/hostname.${g}"
+    sed -i "s|up||g" "/etc/hostname.${g}"
+    sed -i "s|!ifconfig ${g} tunnel|tunnel|" "/etc/hostname.${g}"
+    head -n 1 "/etc/hostname.${g}" >> "${hg}"
+    cat << EOF >> "${hg}"
+        rdomain 1
+        tunneldomain 0
+        -keepalive
+EOF
+    sed '1d' "/etc/hostname.${g}" >>  "${hg}"
+    install -o root -g wheel -m 0640 "${hg}" "/etc/hostname.${g}"
+    rm -rf "${hg}"
+    echo "queue outq on ${g} bandwidth 55M max 60M flows 6144 qlimit 6144 default" >> "/etc/pf.conf.macro.queue.out"
+    echo "pass in quick on ${g} to vether1 tagged PERMITTED reply-to ${g}" >> "/etc/pf.conf.gre.tag.in"
+done
+hl=$(mktemp)
+cat << EOF >> "${hl}"
+    rdomain 1
+    inet 127.0.0.1 0xff000000
+    inet6 ::1/128
+    up
+    !route -T 1 add 224/4 127.0.0.1
+    !route -T 1 add 127/8 127.0.0.1
+    !route -T 1 add ::/96 ::1
+    !route -T 1 add ::ffff:0.0.0.0/96 ::1
+EOF
+
+install -o root -g wheel -m 0640 "${hl}" "/etc/hostname.lo1"
+rm -rf "${hl}"
+
+for i in 0 1; do
+    hv=$(mktemp)
+    echo "rdomain ${i}" > "${hv}"
+    grep inet "/etc/hostname.vether${i}" >> "${hv}"
+    install -o root -g wheel -m 0640 "${hv}"  "/etc/hostname.vether${i}"
+done
+rm -rf "${hv}"
+hp=$(mktemp)
+for i in 0 1; do
+    case "${i}" in
+        0)
+            cat << EOF > "${hp}"
+                description "gw-pair-0"
+                rdomain 0
+                inet 10.200.21.1/30
+                !/sbin/route -n add 10.0.0.0/8 10.200.21.2
+                !/sbin/route -n add 172.16.0.0/12 10.200.21.2
+                !/sbin/route -n add 192.168.0.0/16 10.200.21.2
+EOF
+            echo "queue outq on pair${i} bandwidth 55M max 60M flows 6144 qlimit 6144 default" >> "/etc/pf.conf.macro.queue.out"
+        ;;
+        1)
+        cat << EOF > "${hp}"
+            description "gw-pair-1"
+            rdomain 1
+            inet 10.200.21.2/30
+            patch pair0
+            !/sbin/route -T 1 -qn add default 10.200.21.1
+EOF
+        ;;
+    esac
+    install -o root -g wheel -m 0640 "${hp}"  "/etc/hostname.pair${i}"
+done
+rm -rf "${hp}"
+install -o root -g wheel -m 0640 "/home/taglio/Sources/Git/OpenBSD/src/etc/pf.conf.rdomain" "/etc/pf.conf"
+st=$(mktemp)
+head -n 1 "/etc/ssh/sshd_config" > "${st}"
+echo "ListenAddress ${routerid} rdomain 1" >> "${st}"
+cat "/etc/ssh/sshd_config" | sed "/ListenAddress/d" | sed '1d' >> "${st}"
+install -o root -g wheel -m 0640 "${st}" "/etc/ssh/sshd_config"
+rcctl set sshd rtable 1
+rm -rf "${st}"
+[[ -e "/etc/ospfd.conf.red" ]] || (
+    ot=$(mktemp)
+    grep redistribute "/etc/ospfd.conf" > "${ot}"
+    install -o root -g wheel -m 0600 ${ot} "/etc/ospfd.conf.red"
+)
+head -n 1 "/etc/ospfd.conf" > "${ot}"
+echo "router-id ${routerid}" >> "${ot}"
+echo "rdomain 1" >> "${ot}"
+include "/etc/ospfd.conf.red" >> "${ot}"
+grep -A100000 "\# areas" ospfd.conf >> "${ot}"
+install -o root -g wheel -m 0600 ${ot} "/etc/ospfd.conf"
+rcctl set ospfd rtable 1
+
+[[ "${md5nsdconf}" -eq $(md5 "/var/nsd/etc/nsd.conf" | awk '{print $4}') ]] || (
+    sed "s/ip-address: 10.*/ip-address: ${routerid}/" "/var/nsd/etc/nsd.conf"
+)
