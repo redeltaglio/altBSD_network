@@ -21,6 +21,7 @@ rdomain 1
 tunneldomain 0
 -keepalive
 EOF
+    sed -i "/gro/d" "${hg}"
     sed '1d' "/etc/hostname.${g}" >>  "${hg}"
     echo "up" >> "${hg}"
     install -o root -g wheel -m 0640 "${hg}" "/etc/hostname.${g}"
@@ -94,7 +95,7 @@ ot=$(mktemp)
 head -n 1 "/etc/ospfd.conf" > "${ot}"
 echo "router-id ${routerid}" >> "${ot}"
 echo "rdomain 1" >> "${ot}"
-include "/etc/ospfd.conf.red" >> "${ot}"
+echo "include \"/etc/ospfd.conf.red\"" >> "${ot}"
 grep -A100000 "\# areas" "/etc/ospfd.conf">> "${ot}"
 sed -i "s|vether0|vether1|g" "${ot}"
 install -o root -g wheel -m 0600 ${ot} "/etc/ospfd.conf"
