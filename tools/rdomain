@@ -63,7 +63,6 @@ inet 10.200.21.1/30
 !/sbin/route -n add 172.16.0.0/12 10.200.21.2
 !/sbin/route -n add 192.168.0.0/16 10.200.21.2
 EOF
-
         ;;
         1)
         cat << EOF > "${hp}"
@@ -110,8 +109,12 @@ rcctl set ospfd rtable 1
 )
 
 ln -s /etc/rc.d/unbound /etc/rc.d/unbound1
+cp -Rp /var/unbound /var/unbound1
 rcctl enable unbound1
 rcctl set unbound1 rtable 1
+rcctl set unbound1 flags "-c /var/unbound1/etc/unbound.conf"
+sed -i "/::1/d" /var/unbound1/etc/unbound.conf
+sed -i "s|do-ip6: yes|do-ip6: no|"  /var/unbound1/etc/unbound.conf
 [[ -e "/etc/rc.shutdown" ]] || (
     echo "echo \"nameserver 8.8.8.8\" >> /etc/resolv.conf" > /etc/rc.shutdown
     sed -i "/8.8.8.8/d" /etc/resolv.conf

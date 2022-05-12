@@ -2346,3 +2346,47 @@ root@shiva:/etc#
 Why not "[game of trees](https://gameoftrees.org/)"? Or "[game of thrones](https://en.wikipedia.org/wiki/Game_of_Thrones)"? Or other acronym?
 
 ![](https://gameoftrees.org/got.png)
+
+#### Qemu world
+
+```bash
+#if [ -x /usr/local/bin/qemu-system-x86_64 ]; then
+#       export ETHER=vether1
+#       export BRIDGE=bridge0
+#       echo -n ' qemu'; /usr/local/bin/qemu-system-x86_64 -m 256 -hda /home/taglio/Virtual/bhagavati.img -nographic -serial telnet:127.0.0.1:14000,server=on -net nic,macaddr=52:54:00:31:33:7  -net tap
+#fi
+```
+
+```bash
+root@arnuwanda:/etc# cat hostname.vether1                             
+-inet
+-inet6
+rdomain 1
+lladdr random
+inet 192.168.31.14/24
+root@arnuwanda:/etc# cat hostname.bridge0                                                                                                      
+rdomain 1
+add vether1
+add tap0
+root@arnuwanda:/etc# cat hostname.tap0     
+rdomain 1
+up
+root@arnuwanda:/etc# cat dhcpd.conf
+subnet 192.168.31.0 netmask 255.255.255.0 {
+                  range 192.168.31.10 192.168.31.250;
+                  default-lease-time 600;
+                  max-lease-time 7200;
+                  option subnet-mask 255.255.255.0;
+                  option broadcast-address 192.168.31.255;
+                  option routers 192.168.31.14;
+                  option domain-name-servers 10.200.21.1;
+                  option domain-name "telecom.lobby";
+
+                host bhagavati {
+                  hardware ethernet 52:54:00:31:33:7;
+                  fixed-address 192.168.31.13;
+                }
+}
+
+```
+
