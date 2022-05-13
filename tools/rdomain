@@ -120,3 +120,6 @@ sed -i "s|do-ip6: yes|do-ip6: no|"  /var/unbound1/etc/unbound.conf
     sed -i "/8.8.8.8/d" /etc/resolv.conf
     echo "sed -i \"/8.8.8.8/d\" /etc/resolv.conf" >> /etc/rc.local
 )
+ln -s /etc/rc.d/ntpd /etc/rc.d/ntpdaft
+rcctl enable ntpdaft
+rcctl disable ntpd
