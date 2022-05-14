@@ -1,0 +1,10 @@
+#!/bin/ksh
+
+for g in $(ifconfig gre | grep gre*[0-9] | cut -d : -f1); do
+    [ 1 = $(ifconfig "${g}" | grep -c spr) ] && (
+        ifconfig "$g" group wisp
+        n=$(mktemp)
+        awk 'NR==2{print "group wisp"}1' /etc/hostname."${g}"  > "${n}"
+        install -o root -g wheel -o 0640 "${n}" /etc/hostname."${g}"
+    )
+done
