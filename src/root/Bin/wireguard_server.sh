@@ -105,6 +105,23 @@ EOF
         # we should have an error here, this is normal
         sh /etc/netstart wg$i
     ;;
+    "lonely")
+        PRIVKEY=$(openssl rand -base64 32)
+        ifconfig wg > /dev/null 2>&1
+        (( $? == 1 )) && i=0 || (
+            i=0
+            for x in $(ifconfig wg | grep wg*[0-9] | cut -d : -f1 | sed "s|wg||g"); do
+                [[ $x -gt $i ]] && i=$x
+            done
+            ((i+=1))
+
+        )
+        cat <<EOF > /etc/hostname.wg$i
+wgkey $PRIVKEY
+up
+EOF
+        sh /etc/netstart wg$i
+    ;;
 esac
 
 
