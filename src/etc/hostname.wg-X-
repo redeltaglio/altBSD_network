@@ -1,0 +1,7 @@
+description /POPHOST/
+!ifconfig wg/X/ wgkey $(cat wireguard/private/local.key)
+!ifconfig wg/X/ wgpeer $(cat wireguard/pubkeys//POPHOST/) wgaip /WGNET/ wgaip 224.0.0.5 wgaip 224.0.0.6
+rdomain 3
+wgport 1300/X/
+inet  /WGLOCALIP/
+up

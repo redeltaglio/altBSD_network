@@ -5,6 +5,8 @@ for g in $(ifconfig gre | grep gre*[0-9] | cut -d : -f1); do
         ifconfig "$g" group wisp
         n=$(mktemp)
         awk 'NR==2{print "group wisp"}1' /etc/hostname."${g}"  > "${n}"
-        install -o root -g wheel -o 0640 "${n}" /etc/hostname."${g}"
+        install -i root -g wheel -o 0640 "${n}" /etc/hostname."${g}"
     )
 done
+sed -i "s|vether0|vether1|g" pf.conf.macro.gre.tag.in
+echo "pass in quick on wisp tagged telecom.lobby reply-to wisp" >> pf.conf.macro.gre.tag.in
