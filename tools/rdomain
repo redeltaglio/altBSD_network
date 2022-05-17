@@ -110,6 +110,8 @@ rcctl set ospfd rtable 1
 
 ln -s /etc/rc.d/unbound /etc/rc.d/unbound1
 cp -Rp /var/unbound /var/unbound1
+sed -i "s|unbound|unbound1|g" /var/unbound1/etc/unbound.conf
+sed -i "s|unbound|unbound1|g" /var/unbound1/etc/remote-control.conf
 rcctl enable unbound1
 rcctl set unbound1 rtable 1
 rcctl set unbound1 flags "-c /var/unbound1/etc/unbound.conf"

@@ -98,6 +98,8 @@ EOF
                         [[ -d "/var/unbound${i}" ]] || (
                             ln -s /etc/rc.d/unbound /etc/rc.d/unbound${i}
                             cp -Rp /var/unbound /var/unbound${i}
+                            sed -i "s|unbound|unbound1|g" /var/unbound${i}/etc/unbound.conf
+                            sed -i "s|unbound|unbound1|g" /var/unbound${i}/etc/remote-control.conf
                             rcctl enable unbound${i}
                             rcctl set unbound${i} rtable ${i}
                             rcctl set unbound${i} flags "-c /var/unbound${i}/etc/unbound.conf"
