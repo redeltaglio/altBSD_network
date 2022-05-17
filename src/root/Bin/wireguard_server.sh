@@ -37,10 +37,10 @@ PUBKEY="${psk}"
 PRIVKEY=$(openssl rand -base64 32)
 [[ "yes" == "${ospf}" ]] && wgaip="${net} 224.0.0.5/32 224.0.0.6/32" || wgaip="${net}"
 ifconfig wg > /dev/null 2>&1
-[[ $? -eq 1 ]] && (
+[ $? -eq 1 ] && (
     let i=0
 )
-[[ $? -eq 0 ]] && (
+[ $? -eq 0 ] && (
     let i=0
     for x in $(ifconfig wg | grep wg*[0-9] | cut -d : -f1 | sed "s|wg||g"); do
         [[ $x -gt $i ]] && i=$x
