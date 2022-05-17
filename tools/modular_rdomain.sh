@@ -160,7 +160,7 @@ EOF
             cp -p /etc/hostname.vether1 /etc/hostname.vether"${i}"
             sed -i "s|rdomain 1|rdomain ${i}|" /etc/hostname.vether"${i}"
             sh /etc/netstart vether"${i}"
-            pn=$(getnetwork $(($(ls hostname.pair*[0-9] | wc -l) / 2)))
+            pn=$(getnetwork $(($(ls /etc/hostname.pair*[0-9] | wc -l) / 2)))
             pi=$(( $(ifconfig pair | grep mtu | cut -d : -f1 | sed "s|pair||g" | tail -n 1) + 1 ))
             for b in 1 2; do
                 p=$(mktemp)
