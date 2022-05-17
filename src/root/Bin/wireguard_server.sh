@@ -27,7 +27,7 @@ do
 done
 
 ospf=
-while [ -z $rd ]
+while [ -z $ospf ]
 do
     echo 'Enable ospf? [yes|no]'
     read ospf
@@ -48,12 +48,12 @@ ifconfig wg > /dev/null 2>&1
 cat <<EOF > /etc/hostname.wg$i
 wgkey $PRIVKEY
 wgpeer $PUBKEY wgaip ${wgaip}
-rdomain "{rd}"
+rdomain ${rd}
 inet ${ip}
 wgport 1300$i
 up
 EOF
-
+chmod 0640 /etc/hostname.wg$i
 # start interface so we can get the public key
 # we should have an error here, this is normal
 sh /etc/netstart wg$i
