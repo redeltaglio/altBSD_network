@@ -35,7 +35,7 @@ done
 
 PUBKEY="${psk}"
 PRIVKEY=$(openssl rand -base64 32)
-[[ "yes" == "${ospf}" ]] && wgaip="${net} 224.0.0.5/32 224.0.0.6/32" || wgaip="${net}"
+[[ "yes" == "${ospf}" ]] && wgaip="${net} wgaip 224.0.0.5/32 wgaip 224.0.0.6/32" || wgaip="${net}"
 ifconfig wg > /dev/null 2>&1
 (( $? == 1 )) && i=0 || (
     i=0
