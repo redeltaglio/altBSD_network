@@ -257,7 +257,7 @@ EOF
                                 echo "detected rdomain 3, Wireguard LTE access"
                                 for g in $(ifconfig gre | grep gre*[0-9] | cut -d : -f1); do
 					sed -i "s|rdomain 1|rdomain 2|g" /etc/hostname.${g}
-					sed -i "s|rdomain 1|rdomain 2|g" /etc/sshd_config
+					sed -i "s|rdomain 1|rdomain 2|g" /etc/ssh/sshd_config
 					sed -i "s|rdomain 1|rdomain 2|g" /etc/ospfd.conf
 					sed -i "s|vether1|vether2|g" /etc/ospfd.conf
 					ifconfig "${g}" destroy
