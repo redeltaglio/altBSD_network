@@ -141,10 +141,17 @@ EOF
         ;;
         "add")
             echo "adding new Rdomain"
+            for g in $(ifconfig gre | grep gre*[0-9] | cut -d : -f1); do
+                rd=$(cat /etc/hostname.${g} | grep rdom  | awk '{print $2}')
+                [ "${rd}" -ne 1 ] || break && (
+                    sed -i "s|rdomain 1|rdomain 2|g" /etc/hostname.${g}
+                    ifconfig "${g}" destroy
+                    sh /etc/netstart "${g}"
+                )
+            done
             i=$(ifconfig lo | grep rdom | wc -l)
             ((i+=1))
             lo=$(mktemp)
-            cat /etc/hostname.lo1 > "${lo}"
             cat << EOF > "${lo}"
 rdomain ${i}
 inet 127.0.0.1 0xff000000
@@ -178,9 +185,11 @@ EOF
                             install -o root -g wheel -m 0640 "${p}" /etc/hostname.pair"${pi}"
                             sh /etc/netstart pair"${pi}"
                         )
-                        [ 0 -eq $(grep -c pair"${pi}" /etc/ripd.conf.1) ] && (
-                            echo "interface pair${pi}" >> /etc/ripd.conf.1
-                            rcctl restart ripd
+                        [ "${i}" -gt 1 ] && (
+                            [ 0 -eq $(grep -c pair"${pi}" /etc/ripd.conf.1) ] && (
+                                echo "interface pair${pi}" >> /etc/ripd.conf.1
+                                rcctl restart ripd
+                            )
                         )
                     ;;
                     2)
@@ -232,6 +241,23 @@ EOF
                             rcctl start "unbound${i}"
                         )
                         case "${id}" in
+                            2)
+                                cat > /etc/ripd.con.1 << EOF
+#       $OpenBSD: ripd.conf,v 1.1 2014/07/11 21:20:10 deraadt Exp $
+redistribute 192.168.13.0/24
+redistribute 172.16.0.0/12
+fib-update yes
+split-horizon poisoned
+triggered-updates yes
+rdomain 1
+interface pair2
+EOF
+                                chmod 0600 /etc/ripd.conf.1
+                                ln -s /etc/rc.d/ripd "/etc/rc.d/ripd1"
+                                rcctl enable "ripd1"
+                                rcctl set "ripd1" rtable "1"
+                                rcctl set "ripd1" flags "-f /etc/ripd.conf.1 -s /var/run/ripd.sock.1"
+                                rcctl start "ripd1"
                             3)
                                 echo "detected rdomain 3, Wireguard LTE access"
                                 for e in $(grep inet /etc/hostname.enc* | cut -d : -f1); do
@@ -339,4 +365,4 @@ EOF
         ;;
     esac
 }
-nr "add"
+nr "${1}"
