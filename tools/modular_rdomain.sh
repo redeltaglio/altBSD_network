@@ -258,6 +258,7 @@ EOF
                                 rcctl set "ripd1" rtable "1"
                                 rcctl set "ripd1" flags "-f /etc/ripd.conf.1 -s /var/run/ripd.sock.1"
                                 rcctl start "ripd1"
+                        	;;
                             3)
                                 echo "detected rdomain 3, Wireguard LTE access"
                                 for e in $(grep inet /etc/hostname.enc* | cut -d : -f1); do
