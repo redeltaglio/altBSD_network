@@ -275,7 +275,7 @@ EOF
                                     host=$(cat /etc/hostname.gre"${id}" | grep desc | cut -d \" -f2)
                                     rm -rf /etc/hostname.{gre,enc}"${id}"
                                     rm -rf /etc/iked.conf."${host}"
-                                    sed "/${host}/d" /etc/iked.conf
+                                    sed -i "/${host}/d" /etc/iked.conf
                                     ikectl reload
                                     sed -i "/interface gre${id}/,/}/d" /etc/ospfd.conf
                                     sed -i "/gre${id}/d" /etc/pf.conf.macro.gre.tag.in
