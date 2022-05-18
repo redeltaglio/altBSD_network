@@ -205,6 +205,7 @@ EOF
 #$OpenBSD: ripd.conf,v 1.1 2014/07/11 21:20:10 deraadt Exp $
 fib-update yes
 redistribute 192.168.13.0/24
+redistribute 172.16.0.0/12
 split-horizon poisoned
 triggered-updates yes
 rdomain ${i}
@@ -337,14 +338,17 @@ EOF
 		ospf="yes"
 
 		PUBKEY="${psk}"
+		echo "${psk}" > /etc/wireguard/pubkeys/"${host}"
 		[[ "yes" == "${ospf}" ]] && wgaip="${net} wgaip 224.0.0.5/32 wgaip 224.0.0.6/32" || wgaip="${net}"
 		install -o root -g wheel -m 0640 "/home/taglio/Sources/Git/OpenBSD/src/etc/hostname.wg-X-" "/etc/hostname.wg${i}"
 		sed -i "s|/X/|${i}|g" "/etc/hostname.wg${i}"
 		sed -i "s|/WGLOCALIP/|${ip}|g" "/etc/hostname.wg${i}"
 		sed -i "s|/POPHOST/|${phn}|g" "/etc/hostname.wg${i}"
+		sed -i "s|/WGNET/|${net}|g" "/etc/hostname.wg${i}"
 		sh /etc/netstart wg"${i}"
-
-		cat << EOF > "/etc/ospfd.conf.${i}"
+		ospfmd5=$(tr -cd '[:alnum:],.' < /dev/urandom | fold -w 15 | head -n 1)
+		echo "add $ospfmd5 to LTE client as OSPF md5 interface"
+		cat << EOF > "/etc/ospfd.conf.${rd}"
 # $OpenBSD: ospfd.conf,v 1.2 2018/08/07 07:06:20 claudio Exp $
 router-id ${ri}
 rdomain ${rd}
@@ -355,12 +359,28 @@ area 0.0.0.0 {
 		metric 1
 		passive
 	}
+	interface wg0 {
+                auth-type crypt
+                auth-md 1 "${ospfmd5}"
+                auth-md-keyid 1
+                router-dead-time 40
+                hello-interval 10
+                retransmit-interval 5
+                transmit-delay 1
+                type p2p
+        }
 }
+
 EOF
+		ln -s /etc/rc.d/ospfd /etc/rc.d/ospfd"${rd}"
+		rcctl enable ospfd"${rd}" 
 		rcctl set ospfd"${rd}" rtable "${rd}"
+		rcctl set ospfd"${rd}" flags "-f /etc/ospfd.conf.${rd}"
 		rcctl start ospfd"${rd}"
 		cp /etc/pf.conf /root/Backups/pf.conf."${RANDOM}"
 		install -o root -g wheel -m 0640 "/home/taglio/Sources/Git/OpenBSD/src/etc/pf.conf.mr" /etc/pf.conf
+		echo "queue outq on wg"${i}" bandwidth 18M max 20M flows 2048 qlimit 2048 default" >> /etc/pf.conf.macro.queue.out
+		echo "queue outq on pair5 bandwidth 18M max 20M flows 2048 qlimit 2048 default" >> /etc/pf.conf.macro.queue.out
 		pfctl -f /etc/pf.conf
         ;;
         *)
