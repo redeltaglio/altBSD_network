@@ -211,16 +211,16 @@ triggered-updates yes
 rdomain ${i}
 interface pair${pi}
 EOF
-                        [[ -e "/etc/ripd.conf.${i}" ]] && rm -rf "/etc/ripd.conf.${i}" || (
-                            install -o root -g wheel -m 0600 "${r}" "/etc/ripd.conf.${i}"
-                            ln -s /etc/rc.d/ripd "/etc/rc.d/ripd${i}"
-                            rcctl enable "ripd${i}"
-                            rcctl set "ripd${i}" rtable "${i}"
-                            rcctl set "ripd${i}" flags "-f /etc/ripd.conf.${i} -s /var/run/ripd.sock.${i}"
-                            rcctl start "ripd${i}"
-                        )
+                        [[ -e "/etc/ripd.conf.${i}" ]] && rm -rf "/etc/ripd.conf.${i}" 
+		            install -o root -g wheel -m 0600 "${r}" "/etc/ripd.conf.${i}"
+		            ln -s /etc/rc.d/ripd "/etc/rc.d/ripd${i}"
+		            rcctl enable "ripd${i}"
+		            rcctl set "ripd${i}" rtable "${i}"
+		            rcctl set "ripd${i}" flags "-f /etc/ripd.conf.${i} -s /var/run/ripd.sock.${i}"
+		            rcctl start "ripd${i}"
+                        
 
-                        [[ -d "/var/unbound${i}" ]] && rm -rf "/var/unbound${i}" || (
+                        [[ -d "/var/unbound${i}" ]] && rm -rf "/var/unbound${i}" 
                             sed -i "/::1/d" /etc/resolv.conf
 
                             ln -s /etc/rc.d/unbound /etc/rc.d/unbound${i}
@@ -233,7 +233,7 @@ EOF
                             rcctl set unbound${i} rtable ${i}
                             rcctl set unbound${i} flags "-c /var/unbound${i}/etc/unbound.conf"
                             rcctl start "unbound${i}"
-                        )
+                 
                         case "${i}" in
                             2)
                                 cat > /etc/ripd.conf.1 << EOF
