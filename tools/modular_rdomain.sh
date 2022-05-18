@@ -185,7 +185,7 @@ EOF
                             install -o root -g wheel -m 0640 "${p}" /etc/hostname.pair"${pi}"
                             sh /etc/netstart pair"${pi}"
                         )
-                        [ "${i}" -gt 1 ] && (
+                        [ "${i}" -gt 2 ] && (
                             [ 0 -eq $(grep -c pair"${pi}" /etc/ripd.conf.1) ] && (
                                 echo "interface pair${pi}" >> /etc/ripd.conf.1
                                 rcctl restart ripd
@@ -240,9 +240,9 @@ EOF
                             rcctl set unbound${i} flags "-c /var/unbound${i}/etc/unbound.conf"
                             rcctl start "unbound${i}"
                         )
-                        case "${id}" in
+                        case "${i}" in
                             2)
-                                cat > /etc/ripd.con.1 << EOF
+                                cat > /etc/ripd.conf.1 << EOF
 #       $OpenBSD: ripd.conf,v 1.1 2014/07/11 21:20:10 deraadt Exp $
 redistribute 192.168.13.0/24
 redistribute 172.16.0.0/12
