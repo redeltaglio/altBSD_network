@@ -261,6 +261,8 @@ EOF
 					sed -i "s|vether1|vether2|g" /etc/ospfd.conf
 					ifconfig "${g}" destroy
 					sh /etc/netstart "${g}"
+					rcctl set ospfd rtable 2
+					rcctl set sshd rtable 2
 					rcctl restart sshd
 					rcctl restart ospfd
 				done
@@ -345,7 +347,7 @@ EOF
 			((i+=1))
 
 		)
-		install -o root -g wheel -m 0640 "/home/taglio/Sorces/Git/OpenBSD/src/etc/hostname.wg-X-" "/etc/hostname.wg${i}"
+		install -o root -g wheel -m 0640 "/home/taglio/Sources/Git/OpenBSD/src/etc/hostname.wg-X-" "/etc/hostname.wg${i}"
 		sed -i "s|/X/|${i}|g" "/etc/hostname.wg${i}"
 		sed -i "s|/WGLOCALIP/|${ip}|g" "/etc/hostname.wg${i}"
 		sed -i "s|/POPHOST/|${phn}|g" "/etc/hostname.wg${i}"
@@ -367,7 +369,7 @@ EOF
 		rcctl set ospfd"${id}" rtable "${id}"
 		rcctl start ospfd"${id}"
 		cp /etc/pf.conf /root/Backups/pf.conf."${RANDOM}"
-		install -o root -g wheel -m 0640 "/home/taglio/Sorces/Git/OpenBSD/src/etc/pf.conf.mr" /etc/pf.conf
+		install -o root -g wheel -m 0640 "/home/taglio/Sources/Git/OpenBSD/src/etc/pf.conf.mr" /etc/pf.conf
 		pfctl -f /etc/pf.conf
         ;;
         *)
