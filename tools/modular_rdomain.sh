@@ -141,14 +141,7 @@ EOF
         ;;
         "add")
             echo "adding new Rdomain"
-            for g in $(ifconfig gre | grep gre*[0-9] | cut -d : -f1); do
-                rd=$(cat /etc/hostname.${g} | grep rdom  | awk '{print $2}')
-                [ "${rd}" -ne 1 ] || break && (
-                    sed -i "s|rdomain 1|rdomain 2|g" /etc/hostname.${g}
-                    ifconfig "${g}" destroy
-                    sh /etc/netstart "${g}"
-                )
-            done
+            
             i=$(ifconfig lo | grep rdom | wc -l)
             ((i+=1))
             lo=$(mktemp)
@@ -188,7 +181,7 @@ EOF
                         [ "${i}" -gt 2 ] && (
                             [ 0 -eq $(grep -c pair"${pi}" /etc/ripd.conf.1) ] && (
                                 echo "interface pair${pi}" >> /etc/ripd.conf.1
-                                rcctl restart ripd
+                                rcctl restart ripd1
                             )
                         )
                     ;;
@@ -261,6 +254,16 @@ EOF
                         	;;
                             3)
                                 echo "detected rdomain 3, Wireguard LTE access"
+                                for g in $(ifconfig gre | grep gre*[0-9] | cut -d : -f1); do
+					sed -i "s|rdomain 1|rdomain 2|g" /etc/hostname.${g}
+					sed -i "s|rdomain 1|rdomain 2|g" /etc/sshd_config
+					sed -i "s|rdomain 1|rdomain 2|g" /etc/ospfd.conf
+					sed -i "s|vether1|vether2|g" /etc/ospfd.conf
+					ifconfig "${g}" destroy
+					sh /etc/netstart "${g}"
+					rcctl restart sshd
+					rcctl restart ospfd
+				done
                                 for e in $(grep inet /etc/hostname.enc* | cut -d : -f1); do
                                     sed -i "/inet/d" "${e}"
                                     id=$(echo "${e}" | sed "s|/etc/hostname.enc||g")
@@ -269,98 +272,103 @@ EOF
                                     host=$(cat /etc/hostname.gre"${id}" | grep desc | cut -d \" -f2)
                                     rm -rf /etc/hostname.{gre,enc}"${id}"
                                     rm -rf /etc/iked.conf."${host}"
+                                    sed "/${host}/d" /etc/iked.conf
                                     ikectl reload
                                     sed -i "/interface gre${id}/,/}/d" /etc/ospfd.conf
                                     sed -i "/gre${id}/d" /etc/pf.conf.macro.gre.tag.in
+                                    sed -i "/gre${id}/d" /etc/pf.conf.macro.queue.out
                                     pfctl -f /etc/pf.conf
                                     rcctl restart ospfd
                                 done
-                                [[ -d "/etc/wireguard" ]] && rm -rf /etc/wireguard || (
-                                    mkdir -p /etc/wireguard/{private,pubkeys}
-                                    chmod -R 0600 /etc/wireguard/private
-                                    openssl rand -base64 32 > /etc/wireguard/private/local.key
-                                    chmod 0400 /etc/wireguard/private/local.key
-                                    ifconfig wg > /dev/null 2>&1
-                                    (( $? == 1 )) && i=0 || (
-                                        i=0
-                                        for x in $(ifconfig wg | grep wg*[0-9] | cut -d : -f1 | sed "s|wg||g"); do
-                                            [[ $x -gt $i ]] && i=$x
-                                        done
-                                        ((i+=1))
-
-                                    )
-                                    ifconfig wg${i} create
-                                    ifconfig wg${i} wgkey $(cat wireguard/private/local.key)
-                                    pk=$(ifconfig | grep wgpubkey | awk '{print $2}')
-                                    echo "add wireguard publickey ${pk} to client"
-                                    psk=
-                                    while [ -z $psk ]
-                                    do
-                                        echo 'Type client pubkey '
-                                        read psk
-                                    done
-                                    net=
-                                    while [ -z $net ]
-                                    do
-                                        echo 'Type /30 subnet '
-                                        read net
-                                    done
-                                    ip=
-                                    while [ -z $ip ]
-                                    do
-                                        echo 'Type wg tunnel ip '
-                                        read ip
-                                    done
-                                    phn=
-                                    while [ -z $phn ]
-                                    do
-                                        echo 'Type client public hostname '
-                                        read phn
-                                    done
-                                    rd=3
-                                    ospf="yes"
-
-                                    PUBKEY="${psk}"
-                                    [[ "yes" == "${ospf}" ]] && wgaip="${net} wgaip 224.0.0.5/32 wgaip 224.0.0.6/32" || wgaip="${net}"
-                                    ifconfig wg > /dev/null 2>&1
-                                    (( $? == 1 )) && i=0 || (
-                                        i=0
-                                        for x in $(ifconfig wg | grep wg*[0-9] | cut -d : -f1 | sed "s|wg||g"); do
-                                            [[ $x -gt $i ]] && i=$x
-                                        done
-                                        ((i+=1))
-
-                                    )
-                                    install -o root -g wheel -m 0640 "/home/taglio/Sorces/Git/OpenBSD/src/etc/hostname.wg-X-" "/etc/hostname.wg${i}"
-                                    sed -i "s|/X/|${i}|g" "/etc/hostname.wg${i}"
-                                    sed -i "s|/WGLOCALIP/|${ip}|g" "/etc/hostname.wg${i}"
-                                    sed -i "s|/POPHOST/|${phn}|g" "/etc/hostname.wg${i}"
-                                    sh /etc/netstart wg"${i}"
-                                )
-                                cat << EOF > "/etc/ospfd.conf.${i}"
-# $OpenBSD: ospfd.conf,v 1.2 2018/08/07 07:06:20 claudio Exp $
-router-id ${ri}
-rdomain ${id}
-include "/etc/ospfd.conf.red"
-# areas
-area 0.0.0.0 {
-         interface vether${id} {
-                metric 1
-                passive
-        }
-}
-EOF
-                                rcctl set ospfd"${id}" rtable "${id}"
-                                rcctl start ospfd"${id}"
-                                cp /etc/pf.conf /root/Backups/pf.conf."${RANDOM}"
-                                install -o root -g wheel -m 0640 "/home/taglio/Sorces/Git/OpenBSD/src/etc/pf.conf.mr" /etc/pf.conf
-                                pfctl -f /etc/pf.conf
+                                
                             ;;
                         esac
                     ;;
                 esac
             done
 
+        ;;
+        "wg")
+		[[ -d "/etc/wireguard" ]] && rm -rf /etc/wireguard 
+		mkdir -p /etc/wireguard/{private,pubkeys}
+		chmod -R 0600 /etc/wireguard/private
+		openssl rand -base64 32 > /etc/wireguard/private/local.key
+		chmod 0400 /etc/wireguard/private/local.key
+		ifconfig wg > /dev/null 2>&1
+		(( $? == 1 )) && i=0 || (
+			i=0
+			for x in $(ifconfig wg | grep wg*[0-9] | cut -d : -f1 | sed "s|wg||g"); do
+			[[ $x -gt $i ]] && i=$x
+			done
+			((i+=1))
+
+		)
+		ifconfig wg${i} create
+		ifconfig wg${i} wgkey $(cat /etc/wireguard/private/local.key)
+		pk=$(ifconfig | grep wgpubkey | awk '{print $2}')
+		echo "add wireguard publickey ${pk} to client"
+		psk=
+		while [ -z $psk ]
+			do
+			echo 'Type client pubkey '
+			read psk
+		done
+		net=
+		while [ -z $net ]
+			do
+			echo 'Type /30 subnet '
+			read net
+		done
+		ip=
+		while [ -z $ip ]
+			do
+			echo 'Type wg tunnel ip '
+			read ip
+		done
+		phn=
+			while [ -z $phn ]
+			do
+			echo 'Type client public hostname '
+			read phn
+		done
+		rd=3
+		ospf="yes"
+
+		PUBKEY="${psk}"
+		[[ "yes" == "${ospf}" ]] && wgaip="${net} wgaip 224.0.0.5/32 wgaip 224.0.0.6/32" || wgaip="${net}"
+		ifconfig wg > /dev/null 2>&1
+		(( $? == 1 )) && i=0 || (
+			i=0
+			for x in $(ifconfig wg | grep wg*[0-9] | cut -d : -f1 | sed "s|wg||g"); do
+				[[ $x -gt $i ]] && i=$x
+			done
+			((i+=1))
+
+		)
+		install -o root -g wheel -m 0640 "/home/taglio/Sorces/Git/OpenBSD/src/etc/hostname.wg-X-" "/etc/hostname.wg${i}"
+		sed -i "s|/X/|${i}|g" "/etc/hostname.wg${i}"
+		sed -i "s|/WGLOCALIP/|${ip}|g" "/etc/hostname.wg${i}"
+		sed -i "s|/POPHOST/|${phn}|g" "/etc/hostname.wg${i}"
+		sh /etc/netstart wg"${i}"
+
+		cat << EOF > "/etc/ospfd.conf.${i}"
+# $OpenBSD: ospfd.conf,v 1.2 2018/08/07 07:06:20 claudio Exp $
+router-id ${ri}
+rdomain ${id}
+include "/etc/ospfd.conf.red"
+# areas
+area 0.0.0.0 {
+	interface vether${id} {
+		metric 1
+		passive
+	}
+}
+EOF
+		rcctl set ospfd"${id}" rtable "${id}"
+		rcctl start ospfd"${id}"
+		cp /etc/pf.conf /root/Backups/pf.conf."${RANDOM}"
+		install -o root -g wheel -m 0640 "/home/taglio/Sorces/Git/OpenBSD/src/etc/pf.conf.mr" /etc/pf.conf
+		pfctl -f /etc/pf.conf
         ;;
         *)
         ;;
