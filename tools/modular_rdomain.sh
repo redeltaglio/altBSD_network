@@ -338,15 +338,6 @@ EOF
 
 		PUBKEY="${psk}"
 		[[ "yes" == "${ospf}" ]] && wgaip="${net} wgaip 224.0.0.5/32 wgaip 224.0.0.6/32" || wgaip="${net}"
-		ifconfig wg > /dev/null 2>&1
-		(( $? == 1 )) && i=0 || (
-			i=0
-			for x in $(ifconfig wg | grep wg*[0-9] | cut -d : -f1 | sed "s|wg||g"); do
-				[[ $x -gt $i ]] && i=$x
-			done
-			((i+=1))
-
-		)
 		install -o root -g wheel -m 0640 "/home/taglio/Sources/Git/OpenBSD/src/etc/hostname.wg-X-" "/etc/hostname.wg${i}"
 		sed -i "s|/X/|${i}|g" "/etc/hostname.wg${i}"
 		sed -i "s|/WGLOCALIP/|${ip}|g" "/etc/hostname.wg${i}"
@@ -356,18 +347,18 @@ EOF
 		cat << EOF > "/etc/ospfd.conf.${i}"
 # $OpenBSD: ospfd.conf,v 1.2 2018/08/07 07:06:20 claudio Exp $
 router-id ${ri}
-rdomain ${id}
+rdomain ${rd}
 include "/etc/ospfd.conf.red"
 # areas
 area 0.0.0.0 {
-	interface vether${id} {
+	interface vether${rd} {
 		metric 1
 		passive
 	}
 }
 EOF
-		rcctl set ospfd"${id}" rtable "${id}"
-		rcctl start ospfd"${id}"
+		rcctl set ospfd"${rd}" rtable "${rd}"
+		rcctl start ospfd"${rd}"
 		cp /etc/pf.conf /root/Backups/pf.conf."${RANDOM}"
 		install -o root -g wheel -m 0640 "/home/taglio/Sources/Git/OpenBSD/src/etc/pf.conf.mr" /etc/pf.conf
 		pfctl -f /etc/pf.conf
