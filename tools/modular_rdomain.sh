@@ -211,7 +211,7 @@ triggered-updates yes
 rdomain ${i}
 interface pair${pi}
 EOF
-                        [[ -e "/etc/ripd.conf.${i}" ]] || (
+                        [[ -e "/etc/ripd.conf.${i}" ]] && rm -rf "/etc/ripd.conf.${i}" || (
                             install -o root -g wheel -m 0600 "${r}" "/etc/ripd.conf.${i}"
                             ln -s /etc/rc.d/ripd "/etc/rc.d/ripd${i}"
                             rcctl enable "ripd${i}"
@@ -220,7 +220,7 @@ EOF
                             rcctl start "ripd${i}"
                         )
 
-                        [[ -d "/var/unbound${i}" ]] || (
+                        [[ -d "/var/unbound${i}" ]] && rm -rf "/var/unbound${i}" || (
                             sed -i "/::1/d" /etc/resolv.conf
 
                             ln -s /etc/rc.d/unbound /etc/rc.d/unbound${i}
@@ -257,12 +257,13 @@ EOF
                                 echo "detected rdomain 3, Wireguard LTE access"
                                 for g in $(ifconfig gre | grep gre*[0-9] | cut -d : -f1); do
 					sed -i "s|rdomain 1|rdomain 2|g" /etc/hostname.${g}
+					ifconfig "${g}" destroy
+					sh /etc/netstart "${g}"
 				done
 				sed -i "s|rdomain 1|rdomain 2|g" /etc/ssh/sshd_config
 				sed -i "s|rdomain 1|rdomain 2|g" /etc/ospfd.conf
 				sed -i "s|vether1|vether2|g" /etc/ospfd.conf
-				ifconfig "${g}" destroy
-				sh /etc/netstart "${g}"
+				
 				rcctl set ospfd rtable 2
 				rcctl set sshd rtable 2
 				rcctl restart sshd
@@ -338,7 +339,7 @@ EOF
 		ospf="yes"
 
 		PUBKEY="${psk}"
-		echo "${psk}" > /etc/wireguard/pubkeys/"${host}"
+		echo "${psk}" > /etc/wireguard/pubkeys/"${phn}"
 		[[ "yes" == "${ospf}" ]] && wgaip="${net} wgaip 224.0.0.5/32 wgaip 224.0.0.6/32" || wgaip="${net}"
 		install -o root -g wheel -m 0640 "/home/taglio/Sources/Git/OpenBSD/src/etc/hostname.wg-X-" "/etc/hostname.wg${i}"
 		sed -i "s|/X/|${i}|g" "/etc/hostname.wg${i}"
