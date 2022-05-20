@@ -1,6 +1,11 @@
 #!/bin/ksh
 
-ri=$(cat /etc/ospfd.conf | grep router-id | awk '{print $2}')
+ri=$(ifconfig vether | grep inet | head -n 1 | awk '{print $2}')
+lri=$(ifconfig vether | grep inet | head -n 1 | awk '{print $2}' | cut -d . -f4)
+
+function getosmd {
+	tr -cd '[:alnum:],.' < /dev/urandom | fold -w 15 | head -n 1
+}
 
 function getnetwork {
     local num=0                    # Initialize num
@@ -70,6 +75,7 @@ EOF
                     0)
                         cat << EOF > "${hp}"
 description "gw-pair-0"
+metric 1
 rdomain 0
 inet 10.200.21.1/30
 !/sbin/route -n add 10.0.0.0/8 10.200.21.2
@@ -80,6 +86,7 @@ EOF
                     1)
                     cat << EOF > "${hp}"
 description "gw-pair-1"
+metric 1
 rdomain 1
 inet 10.200.21.2/30
 patch pair0
@@ -141,7 +148,7 @@ EOF
         ;;
         "add")
             echo "adding new Rdomain"
-            
+
             i=$(ifconfig lo | grep rdom | wc -l)
             ((i+=1))
             lo=$(mktemp)
@@ -170,6 +177,7 @@ EOF
                         ((pn+=1))
                         cat << EOF > "${p}"
 description "gw-pair-${pi}"
+metric 1
 rdomain 1
 inet 10.200.21.${pn}/30
 up
@@ -177,12 +185,6 @@ EOF
                         [[ -e "/etc/hostname.pair${pi}" ]] || (
                             install -o root -g wheel -m 0640 "${p}" /etc/hostname.pair"${pi}"
                             sh /etc/netstart pair"${pi}"
-                        )
-                        [ "${i}" -gt 2 ] && (
-                            [ 0 -eq $(grep -c pair"${pi}" /etc/ripd.conf.1) ] && (
-                                echo "interface pair${pi}" >> /etc/ripd.conf.1
-                                rcctl restart ripd1
-                            )
                         )
                     ;;
                     2)
@@ -192,6 +194,7 @@ EOF
                         ((pi+=1))
                         cat << EOF > "${p}"
 description "gw-pair-${pi}"
+metric 1
 rdomain ${i}
 inet 10.200.21.${pn}/30
 patch pair${opi}
@@ -201,28 +204,9 @@ EOF
                             install -o root -g wheel -m 0640 "${p}" /etc/hostname.pair"${pi}"
                             sh /etc/netstart pair"${pi}"
                         )
-                        cat << EOF > "${r}"
-#$OpenBSD: ripd.conf,v 1.1 2014/07/11 21:20:10 deraadt Exp $
-fib-update yes
-redistribute 192.168.13.0/24
-redistribute 172.16.0.0/12
-split-horizon poisoned
-triggered-updates yes
-rdomain ${i}
-interface pair${pi}
-EOF
-                        [[ -e "/etc/ripd.conf.${i}" ]] && rm -rf "/etc/ripd.conf.${i}" 
-		            install -o root -g wheel -m 0600 "${r}" "/etc/ripd.conf.${i}"
-		            ln -s /etc/rc.d/ripd "/etc/rc.d/ripd${i}"
-		            rcctl enable "ripd${i}"
-		            rcctl set "ripd${i}" rtable "${i}"
-		            rcctl set "ripd${i}" flags "-f /etc/ripd.conf.${i} -s /var/run/ripd.sock.${i}"
-		            rcctl start "ripd${i}"
                         
-
-                        [[ -d "/var/unbound${i}" ]] && rm -rf "/var/unbound${i}" 
+                        [[ -d "/var/unbound${i}" ]] && rm -rf "/var/unbound${i}"
                             sed -i "/::1/d" /etc/resolv.conf
-
                             ln -s /etc/rc.d/unbound /etc/rc.d/unbound${i}
                             cp -Rp /var/unbound /var/unbound${i}
                             sed -i "s|interface: ::1|#interface: ::1|" /var/unbound${i}/etc/unbound.conf
@@ -233,41 +217,90 @@ EOF
                             rcctl set unbound${i} rtable ${i}
                             rcctl set unbound${i} flags "-c /var/unbound${i}/etc/unbound.conf"
                             rcctl start "unbound${i}"
-                 
+
                         case "${i}" in
                             2)
-                                cat > /etc/ripd.conf.1 << EOF
-#       $OpenBSD: ripd.conf,v 1.1 2014/07/11 21:20:10 deraadt Exp $
-redistribute 192.168.13.0/24
-redistribute 172.16.0.0/12
-fib-update yes
-split-horizon poisoned
-triggered-updates yes
-rdomain 1
-interface pair2
+                            	cat << EOF > /etc/ospfd.conf.2
+# $OpenBSD: ospfd.conf,v 1.2 2018/08/07 07:06:20 claudio Exp $
+router-id ${ri}
+rdomain 2
+include "/etc/ospfd.conf.red"
+# areas
+area 0.0.0.0 {
+         interface vether1 {
+                metric 1
+                passive
+        }
 EOF
-                                chmod 0600 /etc/ripd.conf.1
-                                ln -s /etc/rc.d/ripd "/etc/rc.d/ripd1"
-                                rcctl enable "ripd1"
-                                rcctl set "ripd1" rtable "1"
-                                rcctl set "ripd1" flags "-f /etc/ripd.conf.1 -s /var/run/ripd.sock.1"
-                                rcctl start "ripd1"
-                        	;;
-                            3)
-                                echo "detected rdomain 3, Wireguard LTE access"
-                                for g in $(ifconfig gre | grep gre*[0-9] | cut -d : -f1); do
+                                for g in $(ifconfig gre | grep gre*[0-9] | cut -d : -f1); do     	
+                                	cat ospfd.conf | awk "/${g} /{x=NR+8}(NR<=x){print}" >> /etc/ospfd.conf.2
+                                	echo "                metric 2" >> /etc/ospfd.conf.2
+                                	echo "        }"  >> /etc/ospfd.conf.2
+                                done
+                                echo "}" >> /etc/ospfd.conf.2
+                       		[[ -e "/etc/ospfd.conf" ]] && (
+		               		mv /etc/ospfd.conf /etc/ospfd.conf.2
+		               		ospfdmd5=$(getosmd)
+		               		cat << EOF >> "/etc/ospfd.conf.2"
+area 1.1.1.1 {
+        interface pair3 {
+                auth-type crypt
+                auth-md 1 ${ospfdmd5}
+                auth-md-keyid 1
+                router-dead-time 40
+                hello-interval 10
+                retransmit-interval 5
+                transmit-delay 1
+                metric 1
+        }
+}
+EOF
+                       			)
+				for g in $(ifconfig gre | grep gre*[0-9] | cut -d : -f1); do
 					sed -i "s|rdomain 1|rdomain 2|g" /etc/hostname.${g}
 					ifconfig "${g}" destroy
 					sh /etc/netstart "${g}"
 				done
-				sed -i "s|rdomain 1|rdomain 2|g" /etc/ssh/sshd_config
-				sed -i "s|rdomain 1|rdomain 2|g" /etc/ospfd.conf
-				sed -i "s|vether1|vether2|g" /etc/ospfd.conf
-				
-				rcctl set ospfd rtable 2
+                       		ln -s /etc/rc.d/ospfd /etc/rc.d/ospfd1
+                       		ln -s /etc/rc.d/ospfd /etc/rc.d/ospfd2
+                       		ln -s /etc/rc.d/ospfd /etc/rc.d/ospfd3
+                       		chmod 0600 /etc/ospfd.conf.2
+				rcctl disable ospfd
+				rcctl stop ospfd
+				rcctl enable ospfd2
+				rcctl set ospfd2 flags "-f /etc/ospfd.conf.2"
+				rcctl set ospfd2 rtable 2
+				rcctl start ospfd2
 				rcctl set sshd rtable 2
-				rcctl restart sshd
-				rcctl restart ospfd
+				
+				rcctl restart sshd  
+				((lri-=1))
+				cat << EOF > /etc/ospfd.conf.1
+# $OpenBSD: ospfd.conf,v 1.2 2018/08/07 07:06:20 claudio Exp $
+router-id 192.168.13.${lri}
+rdomain 1
+include "/etc/ospfd.conf.red"
+area 1.1.1.1 {
+        interface pair2 {
+                auth-type crypt
+                auth-md 1 ${ospfdmd5}
+                auth-md-keyid 1
+                router-dead-time 40
+                hello-interval 10
+                retransmit-interval 5
+                transmit-delay 1
+                metric 1
+        }
+}				
+EOF
+	            		chmod 0600 /etc/ospfd.conf.1
+	            		rcctl enable ospfd1
+				rcctl set ospfd1 flags "-f /etc/ospfd.conf.1"
+				rcctl set ospfd1 rtable 1
+				rcctl start ospfd1
+                	    ;;
+                            3)
+                                echo "detected rdomain 3, Wireguard LTE access"
                                 for e in $(grep inet /etc/hostname.enc* | cut -d : -f1); do
                                     sed -i "/inet/d" "${e}"
                                     id=$(echo "${e}" | sed "s|/etc/hostname.enc||g")
@@ -282,9 +315,9 @@ EOF
                                     sed -i "/gre${id}/d" /etc/pf.conf.macro.gre.tag.in
                                     sed -i "/gre${id}/d" /etc/pf.conf.macro.queue.out
                                     pfctl -f /etc/pf.conf
-                                    rcctl restart ospfd
+                                    rcctl restart ospfd2
                                 done
-                                
+
                             ;;
                         esac
                     ;;
@@ -293,73 +326,84 @@ EOF
 
         ;;
         "wg")
-		[[ -d "/etc/wireguard" ]] && rm -rf /etc/wireguard 
-		mkdir -p /etc/wireguard/{private,pubkeys}
-		chmod -R 0600 /etc/wireguard/private
-		openssl rand -base64 32 > /etc/wireguard/private/local.key
-		chmod 0400 /etc/wireguard/private/local.key
-		ifconfig wg > /dev/null 2>&1
-		(( $? == 1 )) && i=0 || (
-			i=0
-			for x in $(ifconfig wg | grep wg*[0-9] | cut -d : -f1 | sed "s|wg||g"); do
-			[[ $x -gt $i ]] && i=$x
-			done
-			((i+=1))
+    		[[ -d "/etc/wireguard" ]] && rm -rf /etc/wireguard
+    		mkdir -p /etc/wireguard/{private,pubkeys}
+    		chmod -R 0600 /etc/wireguard/private
+    		openssl rand -base64 32 > /etc/wireguard/private/local.key
+    		chmod 0400 /etc/wireguard/private/local.key
+    		ifconfig wg > /dev/null 2>&1
+    		(( $? == 1 )) && i=0 || (
+    			i=0
+    			for x in $(ifconfig wg | grep wg*[0-9] | cut -d : -f1 | sed "s|wg||g"); do
+    			[[ $x -gt $i ]] && i=$x
+    			done
+    			((i+=1))
 
-		)
-		ifconfig wg${i} create
-		ifconfig wg${i} wgkey $(cat /etc/wireguard/private/local.key)
-		pk=$(ifconfig | grep wgpubkey | awk '{print $2}')
-		echo "add wireguard publickey ${pk} to client"
-		psk=
-		while [ -z $psk ]
-			do
-			echo 'Type client pubkey '
-			read psk
-		done
-		net=
-		while [ -z $net ]
-			do
-			echo 'Type /30 subnet '
-			read net
-		done
-		ip=
-		while [ -z $ip ]
-			do
-			echo 'Type wg tunnel ip '
-			read ip
-		done
-		phn=
-			while [ -z $phn ]
-			do
-			echo 'Type client public hostname '
-			read phn
-		done
-		rd=3
-		ospf="yes"
+    		)
+    		ifconfig wg${i} create
+    		ifconfig wg${i} wgkey $(cat /etc/wireguard/private/local.key)
+    		pk=$(ifconfig | grep wgpubkey | awk '{print $2}')
+    		echo "add wireguard publickey ${pk} to client"
+    		psk=
+    		while [ -z $psk ]
+    			do
+    			echo 'Type client pubkey '
+    			read psk
+    		done
+    		net=
+    		while [ -z $net ]
+    			do
+    			echo 'Type /30 subnet '
+    			read net
+    		done
+    		ip=
+    		while [ -z $ip ]
+    			do
+    			echo 'Type wg tunnel ip '
+    			read ip
+    		done
+    		phn=
+    			while [ -z $phn ]
+    			do
+    			echo 'Type client public hostname '
+    			read phn
+    		done
+    		rd=3
+    		ospf="yes"
 
-		PUBKEY="${psk}"
-		echo "${psk}" > /etc/wireguard/pubkeys/"${phn}"
-		[[ "yes" == "${ospf}" ]] && wgaip="${net} wgaip 224.0.0.5/32 wgaip 224.0.0.6/32" || wgaip="${net}"
-		install -o root -g wheel -m 0640 "/home/taglio/Sources/Git/OpenBSD/src/etc/hostname.wg-X-" "/etc/hostname.wg${i}"
-		sed -i "s|/X/|${i}|g" "/etc/hostname.wg${i}"
-		sed -i "s|/WGLOCALIP/|${ip}|g" "/etc/hostname.wg${i}"
-		sed -i "s|/POPHOST/|${phn}|g" "/etc/hostname.wg${i}"
-		sed -i "s|/WGNET/|${net}|g" "/etc/hostname.wg${i}"
-		sh /etc/netstart wg"${i}"
-		ospfmd5=$(tr -cd '[:alnum:],.' < /dev/urandom | fold -w 15 | head -n 1)
-		echo "add $ospfmd5 to LTE client as OSPF md5 interface"
-		cat << EOF > "/etc/ospfd.conf.${rd}"
+    		PUBKEY="${psk}"
+    		echo "${psk}" > /etc/wireguard/pubkeys/"${phn}"
+    		[[ "yes" == "${ospf}" ]] && wgaip="${net} wgaip 224.0.0.5/32 wgaip 224.0.0.6/32" || wgaip="${net}"
+    		install -o root -g wheel -m 0640 "/home/taglio/Sources/Git/OpenBSD/src/etc/hostname.wg-X-" "/etc/hostname.wg${i}"
+    		sed -i "s|/X/|${i}|g" "/etc/hostname.wg${i}"
+    		sed -i "s|/WGLOCALIP/|${ip}|g" "/etc/hostname.wg${i}"
+    		sed -i "s|/POPHOST/|${phn}|g" "/etc/hostname.wg${i}"
+    		sed -i "s|/WGNET/|${net}|g" "/etc/hostname.wg${i}"
+    		sh /etc/netstart wg"${i}"
+    		ospfdmd5=$(getosmd)
+    		om=$(getosmd)
+    		((lri+=1))
+    		echo "add $ospfmd5 to LTE client as OSPF md5 interface"
+    		cat << EOF > "/etc/ospfd.conf.${rd}"
 # $OpenBSD: ospfd.conf,v 1.2 2018/08/07 07:06:20 claudio Exp $
-router-id ${ri}
+router-id 192.168.13.${lri}
 rdomain ${rd}
 include "/etc/ospfd.conf.red"
 # areas
-area 0.0.0.0 {
-	interface vether${rd} {
-		metric 1
-		passive
-	}
+area 1.1.1.1 {
+	interface pair5 {
+                auth-type crypt
+                auth-md 1 "${om}"
+                auth-md-keyid 1
+                router-dead-time 40
+                hello-interval 10
+                retransmit-interval 5
+                transmit-delay 1
+                metric 1
+        }
+}
+area 3.3.3.3 {
+	
 	interface wg0 {
                 auth-type crypt
                 auth-md 1 "${ospfmd5}"
@@ -368,21 +412,37 @@ area 0.0.0.0 {
                 hello-interval 10
                 retransmit-interval 5
                 transmit-delay 1
+                metric 5
                 type p2p
         }
 }
 
 EOF
-		ln -s /etc/rc.d/ospfd /etc/rc.d/ospfd"${rd}"
-		rcctl enable ospfd"${rd}" 
-		rcctl set ospfd"${rd}" rtable "${rd}"
-		rcctl set ospfd"${rd}" flags "-f /etc/ospfd.conf.${rd}"
-		rcctl start ospfd"${rd}"
-		cp /etc/pf.conf /root/Backups/pf.conf."${RANDOM}"
-		install -o root -g wheel -m 0640 "/home/taglio/Sources/Git/OpenBSD/src/etc/pf.conf.mr" /etc/pf.conf
-		echo "queue outq on wg"${i}" bandwidth 18M max 20M flows 2048 qlimit 2048 default" >> /etc/pf.conf.macro.queue.out
-		echo "queue outq on pair5 bandwidth 18M max 20M flows 2048 qlimit 2048 default" >> /etc/pf.conf.macro.queue.out
-		pfctl -f /etc/pf.conf
+		sed -i "s|}||"  "/etc/ospfd.conf.1"
+		cat << EOF >> "/etc/ospfd.conf.1" 
+        interface pair4 {
+                auth-type crypt
+                auth-md 1 "${om}"
+                auth-md-keyid 1
+                router-dead-time 40
+                hello-interval 10
+                retransmit-interval 5
+                transmit-delay 1
+                metric 1
+        }
+}		
+EOF
+		chmod 0600 "/etc/ospfd.conf.${rd}"
+    		ln -s /etc/rc.d/ospfd /etc/rc.d/ospfd"${rd}"
+    		rcctl enable ospfd"${rd}"
+    		rcctl set ospfd"${rd}" rtable "${rd}"
+    		rcctl set ospfd"${rd}" flags "-f /etc/ospfd.conf.${rd}"
+    		rcctl start ospfd"${rd}"
+    		cp /etc/pf.conf /root/Backups/pf.conf."${RANDOM}"
+    		install -o root -g wheel -m 0640 "/home/taglio/Sources/Git/OpenBSD/src/etc/pf.conf.mr" /etc/pf.conf
+    		echo "queue outq on wg"${i}" bandwidth 18M max 20M flows 2048 qlimit 2048 default" >> /etc/pf.conf.macro.queue.out
+    		echo "queue outq on pair5 bandwidth 18M max 20M flows 2048 qlimit 2048 default" >> /etc/pf.conf.macro.queue.out
+    		route -T 0 exec pfctl -f /etc/pf.conf
         ;;
         *)
         ;;
