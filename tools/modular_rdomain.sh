@@ -227,7 +227,7 @@ rdomain 2
 include "/etc/ospfd.conf.red"
 # areas
 area 0.0.0.0 {
-         interface vether1 {
+         interface vether2 {
                 metric 1
                 passive
         }
@@ -269,7 +269,7 @@ EOF
 				rcctl set ospfd2 rtable 2
 				rcctl start ospfd2
 				rcctl set sshd rtable 2
-				
+				sed -i "s|rdomain 1|rdomain 2|g" /etc/ssh/sshd_config
 				rcctl restart sshd  
 				((lri-=1))
 				cat << EOF > /etc/ospfd.conf.1
@@ -308,7 +308,7 @@ EOF
                                     rm -rf /etc/iked.conf."${host}"
                                     sed -i "/${host}/d" /etc/iked.conf
                                     ikectl reload
-                                    sed -i "/interface gre${id}/,/}/d" /etc/ospfd.conf
+                                    sed -i "/interface gre${id}/,/}/d" /etc/ospfd.conf.2
                                     sed -i "/gre${id}/d" /etc/pf.conf.macro.gre.tag.in
                                     sed -i "/gre${id}/d" /etc/pf.conf.macro.queue.out
                                     pfctl -f /etc/pf.conf

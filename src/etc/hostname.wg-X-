@@ -1,7 +1,7 @@
 description /POPHOST/
 metric 5
 !ifconfig wg/X/ wgkey $(cat /etc/wireguard/private/local.key)
-!ifconfig wg/X/ wgpeer $(cat /etc/wireguard/pubkeys//POPHOST/) wgaip /WGNET/ wgaip 224.0.0.5 wgaip 224.0.0.6
+!ifconfig wg/X/ wgpeer $(cat /etc/wireguard/pubkeys//POPHOST/) wgaip /WGNET/ wgaip 224.0.0.5 wgaip 224.0.0.6 wgpka 25
 rdomain 3
 wgport 1300/X/
 inet  /WGLOCALIP//30
