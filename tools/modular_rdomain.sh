@@ -233,15 +233,13 @@ area 0.0.0.0 {
         }
 EOF
                                 for g in $(ifconfig gre | grep gre*[0-9] | cut -d : -f1); do     	
-                                	cat ospfd.conf | awk "/${g} /{x=NR+8}(NR<=x){print}" >> /etc/ospfd.conf.2
+                                	cat /etc/ospfd.conf | awk "/${g} /{x=NR+8}(NR<=x){print}" >> /etc/ospfd.conf.2
                                 	echo "                metric 2" >> /etc/ospfd.conf.2
                                 	echo "        }"  >> /etc/ospfd.conf.2
                                 done
                                 echo "}" >> /etc/ospfd.conf.2
-                       		[[ -e "/etc/ospfd.conf" ]] && (
-		               		mv /etc/ospfd.conf /etc/ospfd.conf.2
-		               		ospfdmd5=$(getosmd)
-		               		cat << EOF >> "/etc/ospfd.conf.2"
+	               		ospfdmd5=$(getosmd)
+	               		cat << EOF >> "/etc/ospfd.conf.2"
 area 1.1.1.1 {
         interface pair3 {
                 auth-type crypt
@@ -255,7 +253,6 @@ area 1.1.1.1 {
         }
 }
 EOF
-                       			)
 				for g in $(ifconfig gre | grep gre*[0-9] | cut -d : -f1); do
 					sed -i "s|rdomain 1|rdomain 2|g" /etc/hostname.${g}
 					ifconfig "${g}" destroy
