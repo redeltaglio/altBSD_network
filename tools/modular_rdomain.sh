@@ -243,7 +243,7 @@ EOF
 area 1.1.1.1 {
         interface pair3 {
                 auth-type crypt
-                auth-md 1 ${ospfdmd5}
+                auth-md 1 "${ospfdmd5}"
                 auth-md-keyid 1
                 router-dead-time 40
                 hello-interval 10
@@ -280,7 +280,7 @@ include "/etc/ospfd.conf.red"
 area 1.1.1.1 {
         interface pair2 {
                 auth-type crypt
-                auth-md 1 ${ospfdmd5}
+                auth-md 1 "${ospfdmd5}"
                 auth-md-keyid 1
                 router-dead-time 40
                 hello-interval 10
@@ -380,7 +380,7 @@ EOF
     		ospfdmd5=$(getosmd)
     		om=$(getosmd)
     		((lri+=1))
-    		echo "add $ospfmd5 to LTE client as OSPF md5 interface"
+    		echo "add $ospfdmd5 to LTE client as OSPF md5 interface"
     		cat << EOF > "/etc/ospfd.conf.${rd}"
 # $OpenBSD: ospfd.conf,v 1.2 2018/08/07 07:06:20 claudio Exp $
 router-id 192.168.13.${lri}
@@ -403,7 +403,7 @@ area 3.3.3.3 {
 	
 	interface wg0 {
                 auth-type crypt
-                auth-md 1 "${ospfmd5}"
+                auth-md 1 "${ospfdmd5}"
                 auth-md-keyid 1
                 router-dead-time 40
                 hello-interval 10
@@ -417,6 +417,7 @@ area 3.3.3.3 {
 EOF
 		sed -i "s|}||"  "/etc/ospfd.conf.1"
 		cat << EOF >> "/etc/ospfd.conf.1" 
+	}
         interface pair4 {
                 auth-type crypt
                 auth-md 1 "${om}"
@@ -429,6 +430,7 @@ EOF
         }
 }		
 EOF
+		rcctl restart ospfd1
 		chmod 0600 "/etc/ospfd.conf.${rd}"
     		ln -s /etc/rc.d/ospfd /etc/rc.d/ospfd"${rd}"
     		rcctl enable ospfd"${rd}"
