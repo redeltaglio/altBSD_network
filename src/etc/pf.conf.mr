@@ -72,13 +72,10 @@ match on {gre, wg} scrub  ( reassemble tcp no-df )
 
 #INTERNAL SUBMISSION
 match in on gre proto tcp from <users> to vether2:0 port submission tag RD
-pass in quick on gre tagged RD route-to pair2:0
+pass in quick on gre tagged RD route-to egre1:0
 match in on gre proto {tcp, udp} from 192.168.13.0/24 to vether2:0 port 53 tag DNS
-pass in quick on gre tagged DNS route-to pair2:0
-match in on wg proto tcp from <users> to vether3:0 port submission tag RD
-pass in quick on wg tagged RD route-to pair4:0
-match in on wg proto {tcp, udp} from 192.168.13.0/24 to vether3:0 port 53 tag DNS
-pass in quick on wg tagged DNS route-to pair4:0
+pass in quick on gre tagged DNS route-to egre1:0
+
 
 
 match out on $ext_if from <users> to ! <reserved> received-on pair nat-to $pub tag telecom.lobby
