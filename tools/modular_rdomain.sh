@@ -177,6 +177,7 @@ EOF
                         ((pn+=1))
                         cat << EOF > "${p}"
 description "gw-pair-${pi}"
+mtu 9216
 metric 1
 rdomain 1
 inet 10.200.21.${pn}/30
@@ -194,6 +195,7 @@ EOF
                         ((pi+=1))
                         cat << EOF > "${p}"
 description "gw-pair-${pi}"
+mtu 9216
 metric 1
 rdomain ${i}
 inet 10.200.21.${pn}/30
@@ -236,6 +238,7 @@ EOF
                                 	cat /etc/ospfd.conf | awk "/${g} /{x=NR+8}(NR<=x){print}" >> /etc/ospfd.conf.2
                                 	echo "                metric 2" >> /etc/ospfd.conf.2
                                 	echo "        }"  >> /etc/ospfd.conf.2
+                                	
                                 done
                                 echo "}" >> /etc/ospfd.conf.2
 	               		ospfdmd5=$(getosmd)
@@ -255,6 +258,7 @@ area 1.1.1.1 {
 EOF
 				for g in $(ifconfig gre | grep gre*[0-9] | cut -d : -f1); do
 					sed -i "s|rdomain 1|rdomain 2|g" /etc/hostname.${g}
+					awk 'NR==2{print "metric 2"}1' /etc/hostname."${g}"
 					ifconfig "${g}" destroy
 					sh /etc/netstart "${g}"
 				done
@@ -295,7 +299,26 @@ EOF
 				rcctl set ospfd1 flags "-f /etc/ospfd.conf.1"
 				rcctl set ospfd1 rtable 1
 				rcctl start ospfd1
-                	    ;;
+				cat << EOF > /etc/hostname.egre1
+description "rdomain 0 to rdomain 2"
+metric 1
+mtu 1500
+tunnel 10.200.21.1 10.200.21.6
+inet 10.200.21.253/30
+up					
+EOF
+				cat << EOF > /etc/hostname.egre2
+description "rdomain 2 to rdomain 0"
+metric 1
+rdomain 2
+tunneldomain 2
+mtu 1500
+tunnel 10.200.21.6 10.200.21.1
+inet 10.200.21.254/30
+up
+EOF
+				sh /etc/netstart egre{1,2}
+  	              	    ;;
                             3)
                                 echo "detected rdomain 3, Wireguard LTE access"
                                 for e in $(grep inet /etc/hostname.enc* | cut -d : -f1); do
@@ -311,9 +334,11 @@ EOF
                                     sed -i "/interface gre${id}/,/}/d" /etc/ospfd.conf.2
                                     sed -i "/gre${id}/d" /etc/pf.conf.macro.gre.tag.in
                                     sed -i "/gre${id}/d" /etc/pf.conf.macro.queue.out
-                                    pfctl -f /etc/pf.conf
-                                    rcctl restart ospfd2
+                                    
                                 done
+                                sed -i "s|pair1|pair3|g" /etc/pf.conf.macro.queue.out
+                                pfctl -f /etc/pf.conf
+                           	rcctl restart ospfd2
 
                             ;;
                         esac
@@ -441,6 +466,7 @@ EOF
     		install -o root -g wheel -m 0640 "/home/taglio/Sources/Git/OpenBSD/src/etc/pf.conf.mr" /etc/pf.conf
     		echo "queue outq on wg"${i}" bandwidth 18M max 20M flows 2048 qlimit 2048 default" >> /etc/pf.conf.macro.queue.out
     		echo "queue outq on pair5 bandwidth 18M max 20M flows 2048 qlimit 2048 default" >> /etc/pf.conf.macro.queue.out
+    		
     		route -T 0 exec pfctl -f /etc/pf.conf
         ;;
         *)
