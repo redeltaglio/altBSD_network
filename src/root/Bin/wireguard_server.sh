@@ -93,7 +93,7 @@ EOF
             read ospf
         done
         PUBKEY="${psk}"
-        [[ "yes" == "${ospf}" ]] && wgaip="${net} wgaip 224.0.0.5/32 wgaip 224.0.0.6/32" || wgaip="${net}"
+        [[ "yes" == "${ospf}" ]] && wgaip="${net} wgaip 224.0.0.5/32 wgaip 224.0.0.6/32 wgaip 192.168.13.0/24 wgaip 172.16.19.0/24" || wgaip="${net}"
         line=$(cat /etc/hostname.wg$i | grep -n wgpeer | tail -n 1 | cut -d : -f1)
         ((line+=1))
         awk 'NR=='"${line}"'{print "wgpeer $PUBKEY wgaip ${wgaip}"}1' /etc/hostname.wg$i
@@ -107,15 +107,12 @@ EOF
     ;;
     "lonely")
         PRIVKEY=$(openssl rand -base64 32)
-        ifconfig wg > /dev/null 2>&1
-        (( $? == 1 )) && i=0 || (
-            i=0
-            for x in $(ifconfig wg | grep wg*[0-9] | cut -d : -f1 | sed "s|wg||g"); do
-                [[ $x -gt $i ]] && i=$x
-            done
-            ((i+=1))
-
-        )
+        i=
+        while [ -z $i ]
+        do
+            echo 'Type wg tunnel interface id'
+            read i
+        done
         cat <<EOF > /etc/hostname.wg$i
 wgkey $PRIVKEY
 up
