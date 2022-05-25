@@ -2337,7 +2337,9 @@ root@shiva:/etc#
 
 ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/tos_dscp_2.png)
 
-#### OSPF timings
+#### OSPF deep diving
+
+![](https://github.com/redeltaglio/OpenBSD/raw/master/img/routing_tables_mk.png)
 
 ![](https://raw.githubusercontent.com/redeltaglio/OpenBSD/master/img/ospf-timers-guide-table.webp)
 
