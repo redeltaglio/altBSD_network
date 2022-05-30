@@ -1,22 +1,16 @@
 
 
-# OpenBSD "Redama" guerrilla services network
+# OpenBSD "guerrilla" services network
 
 ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/puffy/puflogv1000X650.gif)
 
-A full configured, secure by default, encrypted services network called "Redama", my business name.
-
-It will replicate all the services on the network, and it can be deleted without loosing any data.
+A full configured, secure by default, encrypted network, a pile of services binded using virtual routing, domains and tables, concept.
 
 Especially focused above security in every ISO/OSI pile level. 
 
-Applications are multiples, from bypass the European [ECHELON](https://en.wikipedia.org/wiki/ECHELON), an enormous sniffer from some ISP, or the great firewall in China, to create very secure not logged chat, to dynamic traditional services that will move from an host to another in a total transparent mode to the final user.
+#### Network and hosts layout.
 
-I'm an addicted of privacy and security and I'm very tired about the modern slavery network transmitted by weapons from the European elite. 
-
-*Vatican, a big part of Aristocracy and a lot of leafs, and some corrupted secret services are totally guilty about the recent destroy of democracy. They are owners of an exploitation camp transmitted by electromagnetic weapons, radio that modulates hided behind FM broadcast official transmissions, and elaborated by artificial intelligence from the Collserola tower in Barcelona above all the Mediterranean area. Electronic slavery, the modern slavery that United Nation is investigating is my goal. With the same technology but with other type of use some nobles administrate Mafia, terrorism, manipulation, mental domination, corruption, fiscal frauds and so on. But in this case modulation is transmitted by many others towers.*
-
-#### Network layout
+![Network layout](https://github.com/redeltaglio/OpenBSD/raw/master/img/network_layout.png)
 
 #### VPS election
 
@@ -2394,3 +2388,4 @@ subnet 192.168.31.0 netmask 255.255.255.0 {
 
 ```
 
+*Vatican, a big part of Aristocracy and a lot of leafs, and some corrupted secret services are totally guilty about the recent destroy of democracy. They are owners of an exploitation camp transmitted by electromagnetic weapons, radio that modulates hided behind FM broadcast official transmissions, and elaborated by artificial intelligence from the Collserola tower in Barcelona above all the Mediterranean area. Electronic slavery, the modern slavery that United Nation is investigating is my goal. With the same technology but with other type of use some nobles administrate Mafia, terrorism, manipulation, mental domination, corruption, fiscal frauds and so on. But in this case modulation is transmitted by many others towers.*
