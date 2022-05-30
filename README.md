@@ -16,6 +16,8 @@ I'm an addicted of privacy and security and I'm very tired about the modern slav
 
 *Vatican, a big part of Aristocracy and a lot of leafs, and some corrupted secret services are totally guilty about the recent destroy of democracy. They are owners of an exploitation camp transmitted by electromagnetic weapons, radio that modulates hided behind FM broadcast official transmissions, and elaborated by artificial intelligence from the Collserola tower in Barcelona above all the Mediterranean area. Electronic slavery, the modern slavery that United Nation is investigating is my goal. With the same technology but with other type of use some nobles administrate Mafia, terrorism, manipulation, mental domination, corruption, fiscal frauds and so on. But in this case modulation is transmitted by many others towers.*
 
+#### Network layout
+
 #### VPS election
 
 ```bash

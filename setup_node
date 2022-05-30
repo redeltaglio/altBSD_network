@@ -36,6 +36,7 @@
 # ctrl: https://oss.oetiker.ch/smokeping/
 # ospf: https://rickfreyconsulting.com/rosv6-ospfv2-quick-refrence-guide/
 # antispam: http://www.benzedrine.ch/
+# memory based filesystem FreeBSD:  mdmfs -M -S -o async -s 200m md0 /mnt 
 
 #####
 #
