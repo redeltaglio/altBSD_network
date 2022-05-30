@@ -8,9 +8,48 @@ A full configured, secure by default, encrypted network, a pile of services bind
 
 Especially focused above security in every ISO/OSI pile level. 
 
-#### Network and hosts layout.
+#### Concepts and layouts.
 
-![Network layout](https://github.com/redeltaglio/OpenBSD/raw/master/img/network_layout.png)
+![Political Map](https://upload.wikimedia.org/wikipedia/commons/5/55/Political_Map_of_the_World.png)
+
+In my project I consider Earth divided into three big groups which size is ruled by [longitude](https://en.wikipedia.org/wiki/Longitude):
+
+```bash
+[ $long -ge -180 && $long -le -60 ] && group=12 
+[ $long -ge -60 && $long -le 60 ] && group=34
+[ $long -ge 60 && $long -le 180 ] && group=56
+```
+
+Those are named as decimals or substantives: 
+
+- `12, west`
+- `34, center`
+- `56, east`
+
+Network is IKEv2 based full mesh layout, every host is connected to all the others:
+
+![Network layout](https://github.com/redeltaglio/OpenBSD/raw/master/img/network_layout.png)For example:
+
+```bash
+flow esp in proto gre from 65.20.98.172 to 78.141.201.0 peer 65.20.98.172 srcid ASN1_DN//C=UK/ST=England/L=London/CN=uk.telecomlobby.com dstid ASN1_DN//C=ES/ST=Madrid/L=Madrid/O=Telecom Lobby/OU=VPNC/CN=choopa.telecomlobby.com type require
+flow esp in proto gre from 94.72.143.163 to 78.141.201.0 peer 94.72.143.163 srcid ASN1_DN//C=UK/ST=England/L=London/CN=uk.telecomlobby.com dstid ASN1_DN//C=BG/ST=Lovech/L=Troyan/O=Telecom Lobby/OU=VPNC/CN=bg.telecomlobby.com type require
+flow esp in proto gre from 139.180.165.223 to 78.141.201.0 peer 139.180.165.223 srcid ASN1_DN//C=UK/ST=England/L=London/CN=uk.telecomlobby.com dstid ASN1_DN//C=AU/ST=New South Wales/L=Sidney/CN=au.telecomlobby.com type require
+flow esp in proto gre from 139.180.206.19 to 78.141.201.0 peer 139.180.206.19 srcid ASN1_DN//C=UK/ST=England/L=London/CN=uk.telecomlobby.com dstid ASN1_DN//C=JP/ST=Tokyo/L=Heiwajima/CN=jp.telecomlobby.com type require
+flow esp in proto gre from 155.138.247.27 to 78.141.201.0 peer 155.138.247.27 srcid ASN1_DN//C=UK/ST=England/L=London/CN=uk.telecomlobby.com dstid ASN1_DN//C=US/ST=Texas/L=Dallas/O=Telecom Lobby/OU=VPNC/CN=us.telecomlobby.com type require
+flow esp in proto gre from 216.238.100.26 to 78.141.201.0 peer 216.238.100.26 srcid ASN1_DN//C=UK/ST=England/L=London/CN=uk.telecomlobby.com dstid ASN1_DN//C=BR/ST=Sao Paulo/L=Sao Paulo/O=Telecom Lobby/OU=VPNC/CN=br.telecomlobby.com type require
+flow esp out proto gre from 78.141.201.0 to 65.20.98.172 peer 65.20.98.172 srcid ASN1_DN//C=UK/ST=England/L=London/CN=uk.telecomlobby.com dstid ASN1_DN//C=ES/ST=Madrid/L=Madrid/O=Telecom Lobby/OU=VPNC/CN=choopa.telecomlobby.com type require
+flow esp out proto gre from 78.141.201.0 to 94.72.143.163 peer 94.72.143.163 srcid ASN1_DN//C=UK/ST=England/L=London/CN=uk.telecomlobby.com dstid ASN1_DN//C=BG/ST=Lovech/L=Troyan/O=Telecom Lobby/OU=VPNC/CN=bg.telecomlobby.com type require
+flow esp out proto gre from 78.141.201.0 to 139.180.165.223 peer 139.180.165.223 srcid ASN1_DN//C=UK/ST=England/L=London/CN=uk.telecomlobby.com dstid ASN1_DN//C=AU/ST=New South Wales/L=Sidney/CN=au.telecomlobby.com type require
+flow esp out proto gre from 78.141.201.0 to 139.180.206.19 peer 139.180.206.19 srcid ASN1_DN//C=UK/ST=England/L=London/CN=uk.telecomlobby.com dstid ASN1_DN//C=JP/ST=Tokyo/L=Heiwajima/CN=jp.telecomlobby.com type require
+flow esp out proto gre from 78.141.201.0 to 155.138.247.27 peer 155.138.247.27 srcid ASN1_DN//C=UK/ST=England/L=London/CN=uk.telecomlobby.com dstid ASN1_DN//C=US/ST=Texas/L=Dallas/O=Telecom Lobby/OU=VPNC/CN=us.telecomlobby.com type require
+flow esp out proto gre from 78.141.201.0 to 216.238.100.26 peer 216.238.100.26 srcid ASN1_DN//C=UK/ST=England/L=London/CN=uk.telecomlobby.com dstid ASN1_DN//C=BR/ST=Sao Paulo/L=Sao Paulo/O=Telecom Lobby/OU=VPNC/CN=br.telecomlobby.com type require
+```
+
+
+
+VPS are abstracted to many different routing domains, [rdomain(4)](https://man.openbsd.org/rdomain.4) is known the technology in OpenBSD:
+
+
 
 #### VPS election
 
@@ -1178,7 +1217,7 @@ We are going to use some ASCII texts with connection between [ISO-3166-1 alpha-2
 
 Next feature for example can be serving a web page in a different language depending on the language used in the web browser of our client but this is another think.
 
-![Political Map](https://upload.wikimedia.org/wikipedia/commons/5/55/Political_Map_of_the_World.png)
+
 
 ```shell
 taglio@trimurti:~/Work/telecom.lobby/OpenBSD$ ./console -I telecom.lobby -Z
