@@ -45,13 +45,9 @@ flow esp out proto gre from 78.141.201.0 to 155.138.247.27 peer 155.138.247.27 s
 flow esp out proto gre from 78.141.201.0 to 216.238.100.26 peer 216.238.100.26 srcid ASN1_DN//C=UK/ST=England/L=London/CN=uk.telecomlobby.com dstid ASN1_DN//C=BR/ST=Sao Paulo/L=Sao Paulo/O=Telecom Lobby/OU=VPNC/CN=br.telecomlobby.com type require
 ```
 
-When we rent a VPS instance in a provider we've to understand that is a virtual machine guest that runs into a kvm server that runs as a process of a server clustered into a physical rack in a data center, the data center itself normally is part of an Internet exchange point to guarantee awesome BGP peering.
+When we rent a VPS instance in a provider we've got to understand that it is a virtual machine guest, normally qemu driven, that runs as a process of a KVM server, normally Linux based,  perhaps also clustered with others that bind resources as CPU, GPU,  networking and storage resources administrated by the host system operative, Xen or similars, that resides into a physical rack in a data center; the data center itself normally is part of an Internet exchange point to guarantee awesome BGP peering.
 
 
-
-
-
- 
 
 VPS are abstracted into many different routing domains, [rdomain(4)](https://man.openbsd.org/rdomain.4) is known in OpenBSD:
 
