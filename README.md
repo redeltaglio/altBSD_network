@@ -49,7 +49,16 @@ When we rent a VPS instance in a provider we've got to understand that it is a v
 
 ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/whatisavps.jpg)
 
-By the way we add more abstraction to this very complicated environment. In our design concept VPS are considered as divided into different routing domains, [rdomain(4)](https://man.openbsd.org/rdomain.4) as they're known in OpenBSD:
+By the way we add more abstraction to this very complicated environment. In our design concept VPS are considered as divided into different routing domains, [rdomain(4)](https://man.openbsd.org/rdomain.4) as they're known in OpenBSD. Is important to understand that there are some fixed rdomains in our design with some specifics functions:
+
+- rdomain 0: IKEv2 service.
+- rdomain 1: OSPFv2 stub area 1.1.1.1
+- rdomain 2: GRE tunnels local networks and OSPFv2 backbone area 0.0.0.0
+- rdomain 3: WG tunnels LTE appliance connections and OSPFv2 area 3.3.3.3.
+- rdomain id mayor that 10: internet services.
+- rdomain id mayor that 100: services rented to public.
+
+![](https://github.com/redeltaglio/OpenBSD/raw/master/img/rdomains_explained.jpg)
 
 
 
