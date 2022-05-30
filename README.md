@@ -47,9 +47,9 @@ flow esp out proto gre from 78.141.201.0 to 216.238.100.26 peer 216.238.100.26 s
 
 When we rent a VPS instance in a provider we've got to understand that it is a virtual machine guest, normally qemu driven, that runs as a process of a KVM server, normally Linux based,  perhaps also clustered with others that bind resources as CPU, GPU,  networking and storage resources administrated by the host system operative, Xen or similars, that resides into a physical rack in a data center; the data center itself normally is part of an Internet exchange point to guarantee awesome BGP peering.
 
+![](https://github.com/redeltaglio/OpenBSD/raw/master/img/whatisavps.jpg)
 
-
-VPS are abstracted into many different routing domains, [rdomain(4)](https://man.openbsd.org/rdomain.4) is known in OpenBSD:
+By the way we add more abstraction to this very complicated environment. In our design concept VPS are considered as divided into different routing domains, [rdomain(4)](https://man.openbsd.org/rdomain.4) as they're known in OpenBSD:
 
 
 
