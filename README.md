@@ -8,6 +8,8 @@ A full configured, secure by default, encrypted network, a pile of services bind
 
 Especially focused above security in every ISO/OSI pile level. 
 
+### Theory behind
+
 #### Concepts and layouts.
 
 ![Political Map](https://upload.wikimedia.org/wikipedia/commons/5/55/Political_Map_of_the_World.png)
@@ -55,14 +57,14 @@ By the way we add more abstraction to this very complicated environment. In our 
 - rdomain 1: OSPFv2 stub area 1.1.1.1
 - rdomain 2: GRE tunnels local networks and OSPFv2 backbone area 0.0.0.0
 - rdomain 3: WG tunnels LTE appliance connections and OSPFv2 area 3.3.3.3.
-- rdomain id mayor that 10: internet services.
-- rdomain id mayor that 100: services rented to public.
+- rdomain id mayor than 10: isolated Internet services.
+- rdomain id mayor than 100: isolated services rented to public.
 
 ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/rdomains_explained.jpg)
 
 
 
-#### VPS election
+#### VPS provider election
 
 ```bash
 taglio@trimurti:~/Work/telecom.lobby/OpenBSD$ ssh ganesha.telecom.lobby

@@ -202,6 +202,9 @@ inet 10.200.21.${pn}/30
 patch pair${opi}
 !/sbin/route -T${i}  -qn add default 10.200.21.${opn}
 EOF
+			;;
+			esac
+			done
                         [[ -e "/etc/hostname.pair${pi}" ]] || (
                             install -o root -g wheel -m 0640 "${p}" /etc/hostname.pair"${pi}"
                             sh /etc/netstart pair"${pi}"
@@ -341,6 +344,8 @@ EOF
                            	rcctl restart ospfd2
 
                             ;;
+                            4)
+                            	
                         esac
                     ;;
                 esac
