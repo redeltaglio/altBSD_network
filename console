@@ -127,7 +127,7 @@ case "${OPT}" in
 		tmux -S "${TS}" set -g status-left-length 40
 		tmux -S "${TS}" set -g history-limit 5000
 		#tmux -S "${TS}" set -g default-terminal "xterm-256color"
-		tmux -S "${TS}" set-option -g status-left '#[fg=white,bold]⚡️ guerrilla ⚡️ '
+		tmux -S "${TS}" set-option -g status-left '#[fg=white,bold] guerrilla ⚡️ '
 		tmux -S "${TS}" set-option -g status-right 'Europe/Madrid #[fg=agua]%I:%M:%S'
 		#tmux -S "${TS}" set -g mouse on
 		#tmux -S "${TS}" bind -n WheelUpPane if-shell -F -t = "#{mouse_any_flag}" "send-keys -M" "if -Ft= '#{pane_in_mode}' 'send-keys -M' 'copy-mode -e; send-keys -M'"
@@ -135,7 +135,7 @@ case "${OPT}" in
 		tmux -S "${TS}" bind -n S-Pagedown send-keys Pagedown
 		# color status bar
 		tmux -S "${TS}" set -g status-bg black
-		tmux -S "${TS}" set -g status-fg cyan
+			tmux -S "${TS}" set -g status-fg cyan
 
 		# highlight current window
 		tmux -S "${TS}" setw -g window-status-current-style bg=black,fg=magenta,bold
