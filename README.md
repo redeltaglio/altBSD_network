@@ -57,12 +57,16 @@ By the way we add more abstraction to this very complicated environment. In our 
 - rdomain 1: OSPFv2 stub area 1.1.1.1
 - rdomain 2: GRE tunnels local networks and OSPFv2 backbone area 0.0.0.0
 - rdomain 3: WG tunnels LTE appliance connections and OSPFv2 area 3.3.3.3.
+- rdomain 4: WG tunnels to roadwarrior systems. For now a FreeBSD laptop called `1969`.
 - rdomain id mayor than 10: isolated Internet services.
 - rdomain id mayor than 100: isolated services rented to public.
 
 ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/rdomains_explained.jpg)
 
+In that design we implement some networking technologies not very commons as:
 
+- [pair(4)](https://man.openbsd.org/pair)
+- [egre(4)](https://man.openbsd.org/egre)
 
 #### VPS provider election
 
