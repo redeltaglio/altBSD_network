@@ -1,6 +1,6 @@
 
 
-# OpenBSD "guerrilla" services network
+# altBSD "guerrilla" services network
 
 ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/puffy/puflogv1000X650.gif)
 
@@ -186,25 +186,11 @@ Files added, please update the repository and remember to use https://bit.ly/3HD
 taglio@trimurti:~/Work/telecom.lobby/OpenBSD$
 ```
 
-In this case remember that in the remote `VNC` web console you've got to configure the same static IPv4 and DNS in order to obtain connectivity to Internet:
-
-```bash
-# ifconfig vio0 160.119.248.111 netmask 255.255.255.0 up
-# route add 0.0.0.0/0 160.119.248.1
-# echo nameserver 8.8.8.8 > /etc/resolv.conf
-```
-
-Next to start the installation process as usual:
-
-```bash
-# cd /tmp
-# ftp -o install.conf https://bit.ly/3HD0Wne
-# install -af /tmp/install.conf
-```
+Next update the repository as usual.
 
 #### Semi automatic system installation
 
-Open the `KVM` web console and the installation process of OpenBSD will start. Interrupt it choosing for the (S)hell option and:
+Open the `KVM` web console and the installation process of OpenBSD will start. Interrupt it choosing for the (S)hell option. In the case you want to run the installation process after having already done it you can do it typing at boot prompt `boot bsd.rd`. Next: 
 
 ```shell
 # dhclient vio0
