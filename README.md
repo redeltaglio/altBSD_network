@@ -142,6 +142,8 @@ First of all install a classic Linux, like Debian for example. Next ssh to the n
 
 #### The console control script
 
+A single script coded using `bash` hard coded scripting language to use from the system administrator workstation. Those are the options:
+
 ```bash
 ./console -I telecom.lobby -SO [openbsd|mikrotik|edgeos|raspi|ALL] -T -> tmux and SSH to hosts [o]
 ./console -I telecom.lobby -SO [openbsd|mikrotik|edgeos|raspi|ALL] -P -> syspatch [o]
