@@ -16,6 +16,7 @@
 #powerdns: https://github.com/PowerDNS/pdns
 #geodns: https://jpmens.net/2015/11/12/geodns-with-powerdns-geoip-back-end/
 #geodns: https://umbriel.fr/blog/Building_a_DIY_CDN:_traffic_distribution.html
+#geodns: https://gdnsd.org/
 #ospf: NBMA design https://www.blackhole-networks.com/OSPF_overload/
 #ospf: https://www.blackhole-networks.com/OSPF
 #dnssec: https://help.dreamhost.com/hc/en-us/articles/219539467
@@ -36,7 +37,8 @@
 # ctrl: https://oss.oetiker.ch/smokeping/
 # ospf: https://rickfreyconsulting.com/rosv6-ospfv2-quick-refrence-guide/
 # antispam: http://www.benzedrine.ch/
-# memory based filesystem FreeBSD:  mdmfs -M -S -o async -s 200m md0 /mnt 
+# memory based filesystem FreeBSD:  mdmfs -M -S -o async -s 200m md0 /mnt
+
 
 #####
 #
