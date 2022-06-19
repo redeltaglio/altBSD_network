@@ -3,7 +3,7 @@
 DATE=$(date +%d%m%Y)
 DATE_RELEASE=$(date +"%d/%m/%Y %H:%m:%S")
 HOMEWRK="/home/taglio/Work/telecom.lobby"
-REPO="/OpenBSD"
+REPO="/altBSD_network"
 RELEASE="/OpenBSD$DATE.tar"
 
 echo "creating tar release"
