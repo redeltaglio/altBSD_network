@@ -57,7 +57,7 @@ By the way we add more abstraction to this very complicated environment. In our 
 - rdomain 1: OSPFv2 stub area 1.1.1.1
 - rdomain 2: GRE tunnels local networks and OSPFv2 backbone area 0.0.0.0
 - rdomain 3: WG tunnels LTE appliance connections and OSPFv2 area 3.3.3.3.
-- rdomain 4: WG tunnels to roadwarrior systems. For now a FreeBSD laptop called `1969`.
+- rdomain 4: WG tunnels to roadwarrior systems. For now a FreeBSD laptop called `1969` and OSPFv2 area 4.4.4.4.
 - rdomain id mayor than 10: isolated Internet services.
 - rdomain id mayor than 100: isolated services rented to public.
 
@@ -78,25 +78,26 @@ taglio@trimurti:~/Work/telecom.lobby/OpenBSD$ ssh ganesha.telecom.lobby
  / _, _/  __(__  )  __/ /_   / _, _/  __/ /_/ / /_/ / /_/ / /_
 /_/ |_|\___/____/\___/\__/  /_/ |_|\___/_.___/\____/\____/\__/
 
-OpenBSD 7.1 (GENERIC) #443: Mon Apr 11 17:55:15 MDT 2022
-    deraadt@amd64.openbsd.org:/usr/src/sys/arch/amd64/compile/GENERIC
+OpenBSD 7.1 (GENERIC) #3: Sun May 15 10:25:28 MDT 2022
+    root@syspatch-71-amd64.openbsd.org:/usr/src/sys/arch/amd64/compile/GENERIC
 real mem = 1056813056 (1007MB)
-avail mem = 1007656960 (960MB)
- 4:38PM  up 6 days,  6:36, 2 users, load averages: 0.13, 0.14, 0.10
+avail mem = 1007652864 (960MB)
+ 7:39PM  up 13 days,  1:22, 2 users, load averages: 0.12, 0.11, 0.20
 ID              Pri State        DeadTime Address         Iface     Uptime
-192.168.13.14   1   FULL/P2P     00:00:35 10.10.9.93      gre15     10:28:52
-192.168.13.55   1   FULL/P2P     00:00:34 10.10.10.61     gre9      04:24:00
-192.168.13.61   1   FULL/P2P     00:00:38 10.10.10.161    gre6      14:29:21
-192.168.13.81   1   FULL/P2P     00:00:33 10.10.10.217    gre3      13:06:45
-192.168.13.1    1   FULL/P2P     00:00:30 10.10.10.225    gre2      01:09:52
-192.168.13.59   1   FULL/P2P     00:00:33 10.10.10.209    gre4      09:15:13
-192.168.13.34   1   FULL/P2P     00:00:38 10.10.10.230    gre1      14:40:49
-May a diseased yak take a liking to your sister.
-taglio@ganesha:/home/taglio$ 
+192.168.13.43   1   FULL/BCKUP   00:00:33 10.200.21.5     pair3     01w6d01h
+192.168.13.46   1   FULL/DR      00:00:33 10.200.21.246   egre5     01w0d18h
+192.168.13.45   1   FULL/BCKUP   00:00:32 10.200.21.250   egre3     4d22h39m
+192.168.13.55   1   FULL/P2P     00:00:32 10.10.10.61     gre9      01w0d10h
+192.168.13.61   1   FULL/P2P     00:00:32 10.10.10.161    gre6      1d21h32m
+192.168.13.59   1   FULL/P2P     00:00:32 10.10.10.209    gre4      4d05h59m
+192.168.13.81   1   FULL/P2P     00:00:32 10.10.10.217    gre3      01w0d10h
+192.168.13.1    1   FULL/P2P     00:00:34 10.10.10.225    gre2      06:06:25
+192.168.13.14   1   FULL/P2P     00:00:32 10.10.9.93      gre15     4d04h37m
+192.168.13.34   1   FULL/P2P     00:00:37 10.10.10.230    gre1      1d07h14m
+This is the LAST time I take travel suggestions from Ray Bradbury!
+taglio@ganesha:/home/taglio$
 
 ```
-
-
 
 First of all you've got to rent a VPS in one service provider, there are a lot on Internet a great resource to find the correct one is this website:
 
@@ -137,6 +138,34 @@ First of all install a classic Linux, like Debian for example. Next ssh to the n
 ```shell
 # echo s > /proc/sysrq-trigger
 # echo b > /proc/sysrq-trigger 
+```
+
+#### The console control script
+
+```bash
+./console -I telecom.lobby -SO [openbsd|mikrotik|edgeos|raspi|ALL] -T -> tmux and SSH to hosts [o]
+./console -I telecom.lobby -SO [openbsd|mikrotik|edgeos|raspi|ALL] -P -> syspatch [o]
+./console -I telecom.lobby -SO [openbsd|mikrotik|edgeos|ALL] -N -> newhost OpenBSD host [o]
+./console -I telecom.lobby -SO [openbsd|mikrotik|edgeos|ALL] -C -> cleanlast [o]
+./console -I telecom.lobby -SO [openbsd|edgeos|ALL] -F -> single file update [o]
+./console -I telecom.lobby -SO [ALL] -KD  -> print all IPsec certificates deadlines [o]
+./console -I telecom.lobby -SO [openbsd] -G -> git pull [o]
+./console -I telecom.lobby -SO [openbsd] -S -> scripts [o]
+./console -I telecom.lobby -SO [openbsd] -D -> dyndnspop [o]
+./console -I telecom.lobby -SO [openbsd] -7 -> changes to 7.0 release [o]
+./console -I telecom.lobby -SO [openbsd] -PF -> changes to PF firewall [o]
+./console -I telecom.lobby -SO [mikrotik] -LTE -> new RouterOS LTE Router instance [o]
+./console -I telecom.lobby -SO [mikrotik] -CHR -> new RouterOS Cloud Hosted Router istance [o] 
+./console -I telecom.lobby -SO [workstation] -GR6 -> add IPv6 ULA to gre tunnel interfaces [o]
+./console -I telecom.lobby -SO [workstation] -RS  -> repository ssh update [o]
+./console -I telecom.lobby -SO [workstation] -Z   -> global network domains setup [o]
+./console -I telecom.lobby -SO [workstation] -GEO -> get IP address geo group [o]
+./console -I telecom.lobby -SO [workstation] -CU  -> single certificate upgrade / change [o]
+./console -I telecom.lobby -SO [workstation] -U   -> update the workstation's user EdDSA certificate [o]
+./console -I telecom.lobby -SO [workstation] -CI  -> custom installation templates [o]
+./console -I telecom.lobby -SO [workstation] -K   -> new IKED pk12 archive [o]
+./console -I telecom.lobby -SO [workstation] -NDS -> encrypt TXT DNS record [o]
+
 ```
 
 #### Generate custom `install.conf` and `disklabel` for new host
