@@ -1,6 +1,6 @@
 
 
-# altBSD "guerrilla" services network
+# altBSD "guerrilla" services network.
 
 ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/puffy/puflogv1000X650.gif)
 
@@ -114,13 +114,7 @@ Some that I use or I've used:
 - [GINERNET, your Hosting and Server provider in Spain](https://ginernet.com/en/)
 - [Hostafrica](https://hostafrica.com)
 
-Try to understand that we've got to build a network of VPS interconnected site to site between everyone with IPsec and every host is plug and play, I mean that we can add or remove VPS just running the software in this repository. First of all it is important to understand that we can use this design in two different application, one will use registered domains the other will use free dns services. Goal for everyone is security trough simplicity, open source design and the correct use and implementation of robust compliance protocols and daemons. The system operative is [OpenBSD](https://www.openbsd.org/) but later we will use also [Alpine Linux](https://alpinelinux.org/). At that point the goal will be interoperability and the search of near perfect TCP/IP throughput. Another goal will be the use of ARM64 mobile devices also based up Alpine, my favorite one is:
-
--  [PinePhone](https://pine64.com/product-category/pinephone/?v=0446c16e2e66)
-
-Another interesting end device based upon open hardware that use [LoRa](https://en.wikipedia.org/wiki/LoRa) and GSM is:
-
-- [ESPboy](https://www.espboy.com/)
+Goal is security trough simplicity, open source design and the correct use and implementation of robust compliance protocols and daemons. The networking system operative is [OpenBSD](https://www.openbsd.org/) and the server one is [NetBSD](https://netbsd.org/). Speaking about the WISP appliance we implement some proprietary Linux based SO while remote ham radio stash are guided by [RaspiOS](https://www.raspbian.org/), a [Debian](https://www.debian.org/) based distro.
 
 #### VPS without OpenBSD as system available
 
@@ -239,7 +233,7 @@ Or run syspatch another time after `001_wifi` install.
 
 #### First steps
 
-First of all I want to underline that we use some values in the `DNS` master zone of the domain where we want to attach our new `VPS` host. *It's not exactly all automatic*.
+First of all I want to underline that we use some values in the `DNS` master zone of the domain where we want to attach our new `VPS` host. 
 
 ``` shell
 root@ganesha:/var/nsd/zones/master# cat telecomlobby.com.zone | grep ipsec && cat telecomlobby.com.zone | grep gre
