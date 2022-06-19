@@ -51,7 +51,7 @@
 #set -o errexit
 set -o nounset
 
-PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/Bin:/home/taglio/Sources/Git/OpenBSD
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/Bin:/home/taglio/Sources/Git/altBSD_network
 BACKUPS="/root/Backups"
 
 #GLOBAL VAR
@@ -71,7 +71,7 @@ typeset -u publichostname=$(echo $publichost | sed "s/.$domainname//")
 defaultv4router=$(route -n show | awk '/default/{print $2}' | head -n 1)
 macdefaultv4router=$(arp -an | grep -w $defaultv4router |  awk '{print $2}')
 #dyndns=$(host -t a cat-01.hopto.org | cut -d ' ' -f4)
-basedir="/home/taglio/Sources/Git/OpenBSD"
+basedir="/home/taglio/Sources/Git/altBSD_network"
 tmpdir=$(mktemp -d)
 datarelease=$(date +"%d%m%Y%H%m%S")
 longdate=$(date)

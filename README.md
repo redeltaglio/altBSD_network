@@ -333,13 +333,15 @@ riccardo@trimurti:~$ dig @8.8.8.8 vpncN.telecomlobby.com A +short
 riccardo@trimurti:~$ 
 ```
 
-In my configuration I've got also a dynamic IPv4 [EdgeOS](https://dl.ubnt.com/guides/edgemax/EdgeOS_UG.pdf) endpoint and another with fixed IPv4 [RouterOS](https://es.wikipedia.org/wiki/MikroTik) one. In EdgeOS I've got to  add the `ROUTERID` of the new OpenBSD mesh host to the relative address-group and to the policy access list 10 using the correct rule number.
+In my configuration I've got an an IPv4 [EdgeOS](https://dl.ubnt.com/guides/edgemax/EdgeOS_UG.pdf) endpoint. In EdgeOS I've got to  add the `ROUTERID` of the new OpenBSD mesh host to the relative address-group and to the policy access list 10 using the correct rule number.
 
 ```shell
 root@indra# set firewall group address-group OPENBSD address 216.238.100.26
 [edit]
 root@indra# 
 root@indra# set firewall group address-group ROUTERID address 192.168.13.55
+[edit]
+root@indra# set policy access-list 10 rule 15 action permit
 [edit]
 root@indra# set policy access-list 10 rule 15 source host 192.168.13.55
 [edit]
@@ -386,9 +388,7 @@ Done
 taglio@trimurti:~/Work/telecom.lobby/OpenBSD$ 
 ```
 
-
-
-In the RouterOS one I've got to update the address list relative to the host presents in my IPSec network:
+If we've got some RouterOS into the OSPF backbone area we 've got to update the address list relative to the host presents in my IPSec network:
 
 ```shell
 [admin@uma.telecom.lobby] /ip firewall address-list> add list=ipsec comment=durga address=45.63.116.141/32
@@ -401,7 +401,7 @@ If in our constellation we've got more than one RouterOS or EdgeOS instance plea
 
 Now start to configure the `CA server` about the `IPsec` public and private key.
 
-In my network layout I've got a [Mikrotik](https://mikrotik.com/) `VPS` that administrate the `IPsec` certificate repositories, it is called `uma`. Use [ipinfo](https://ipinfo.io/) to obtain data about the `SSL` variables to fill, we can query the database using IPv4 or IPv6 like I've done in this example:
+In my network layout I've got a [Mikrotik](https://mikrotik.com/) virtual machine that I use to administrate the `IPsec` certificate repository, it is called `uma`. Use [ipinfo](https://ipinfo.io/) to obtain data about the `SSL` variables to fill, we can query the database using IPv4 or IPv6 like I've done in this example:
 
 ```bash
 taglio@trimurti:~/Work/telecom.lobby/OpenBSD$ curl http:/ipinfo.io/2001:19f0:b400:1655:5400:03ff:fea7:c37b      
