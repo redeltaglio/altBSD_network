@@ -490,24 +490,12 @@ case "${OPT}" in
 			) || echo "${wa[j]}.${LDN} unreachable"
 		done
 		for vpnc_host in $(dig openbsd.${LDN} TXT +short | sed "s/\"//g" | tr \; '\n' | sed '$d'); do
-			deadline=$(ssh -o LogLevel=QUIET -t $vpnc_host.${LDN} openssl x509 -in "/etc/iked/certs/*.crt" -noout -enddate | sed "s|^notAfter=||")
+			deadline=$(ssh -o LogLevel=QUIET -t $vpnc_host.${LDN} openssl x509 -in "/etc/iked/certs/local.crt" -noout -enddate | sed "s|^notAfter=||")
 			echo "IPsec SSL certificate deadline of $vpnc_host is: $deadline"
 			echo "IPsec SSL certificate epoch deadline of $vpnc_host is: $(date --date "${deadline}" "+%s")"
 			deadlineepoch=$(date --date "${deadline}" "+%s")
 			if [ "$deadlineepoch" -lt "$currrentepoch" ]; then
 				openbsdiked+=("$vpnc_host")
-				echo "$vpnc_host IPsec SSL certificate has to be upgraded"
-			fi
-		done
-		echo "Looking at Mikrotik RouterOS hosts..."
-		for vpnc_host in $(dig mikrotik.${LDN} TXT +short | sed "s/\"//g" | tr \; '\n' | sed '$d'); do
-			deadlinemk=$(ssh -o LogLevel=QUIET $vpnc_host.${LDN} /cert pr det where subject-alt-name=\"email:$vpnc_host@ca.telecomlobby.com\" | grep invalid-after | sed -e "s|[^.*]expires.*$||" -e "s|[[:space:]]* invalid-after=||")
-			deadline="$(echo $deadlinemk | cut -d / -f1) $(echo $deadlinemk | cut -d / -f2) $(echo $deadlinemk | cut -d " " -f2) $(echo $deadlinemk| cut -d / -f3 | cut -d " " -f1)"
-			echo "IPsec SSL certificate deadline of $vpnc_host is: $deadline"
-			echo "IPsec SSL certificate epoch deadline of $vpnc_host is: $(date --date "${deadline}" "+%s")"
-			deadlineepoch=$(date --date "${deadline}" "+%s")
-			if [ "$deadlineepoch" -lt "$currrentepoch" ]; then
-				mikrotikiked+=("$vpnc_host")
 				echo "$vpnc_host IPsec SSL certificate has to be upgraded"
 			fi
 		done
@@ -522,10 +510,10 @@ case "${OPT}" in
 				echo "$vpnc_host IPsec SSL certificate has to be upgraded"
 			fi
 		done
-		if [ ${#edgeosiked[@]} -gt 1 ]; then
+		if [ ${#edgeosiked[@]} -gt 0 ]; then
 			echo "edgeos"
 		fi
-		if [ ${#openbsdiked[@]} -gt 1 ]; then
+		if [ ${#openbsdiked[@]} -gt 0 ]; then
 			echo "openbsd"
 			for i in "${openbsdiked[@]}"; do
 				echo "Working into $i Ipsec SSL certificate upgrade"
@@ -549,18 +537,7 @@ case "${OPT}" in
 				echo "uploading P12 to /tmp onto $i"
 				scp $ikedpub "$i.${LDN}:/tmp"
 				ssh -t $i.${LDN} doas ksh "/home/taglio/Sources/Git/OpenBSD/tools/ikedsslupgade"
-				echo "uploading P12 to Mikrotik hosts"
-				for vpnc_host in $(dig mikrotik.${LDN} TXT +short | sed "s/\"//g" | tr \; '\n' | sed '$d'); do
-					scp $ikedpub "${vpnc_host}.${LDN}"
-					echo "/certificate remove [/certificate find where name=${publichost}]" > /tmp/i.rsc
-				 	echo "/certificate import passphrase=123456789 file-name=$pk12 name=${publichost}" >> /tmp/i.rsc
-					echo "/ip ipsec identity set [/ip ipsec identity find where certificate=${publichost}] certificate=${publichost}" >> /tmp/i.rsc
-					scp /tmp/i.rsc "${vpnc_host}.${LDN}"
-					cat  /tmp/i.rsc
-					sleep 40
-					#eval "ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 ${vpnc_host}.${LDN} :execute \{/import i.rsc\}"
-				done
-				openssl pkcs12 -nodes -in $ikedpub -clcerts -nokeys -passin pass:123456789 -passout pass:123456789 -out "$tmpdir/$publichost.crt"
+				scp  ca.telecom.lobby:/etc/ssl/ca.telecomlobby.com/certs/$publichost.crt "$tmpdir/$publichost.crt"
 				echo "uploading .crt to EdgeOS hosts"
 				for vpnc_host in $(dig edgeos.${LDN} TXT +short | sed "s/\"//g" | tr \; '\n' | sed '$d' | cut -d : -f1); do
 					scp "$tmpdir/$publichost.crt" "$vpnc_host.${LDN}:/config/auth"
@@ -568,13 +545,10 @@ case "${OPT}" in
 					ssh $vpnc_host.${LDN} "sudo ipsec rereadall"
 					ssh $vpnc_host.${LDN} "sudo ipsec reload"
 				done
-				openssl x509 -pubkey -noout -passin pass:123456789 -in "$tmpdir/$publichost.crt"  > src/etc/iked/pubkeys/ufqdn/"$srcid@ca.$domainname"
+				openssl x509 -leagcy -pubkey -noout -passin pass:123456789 -in "$tmpdir/$publichost.crt"  > src/etc/iked/pubkeys/ufqdn/"$srcid@ca.$domainname"
 				srm -r "${tmpdir}"
 				echo -e "$srcid@ca.$domainname created please update repository and all the others Openbsd hosts"
 			done
-		fi
-		if [ ${#mikrotikiked[@]} -gt 1 ]; then
-			echo "mikrotik"
 		fi
 	;;
 	#[openbsd]
@@ -1450,7 +1424,7 @@ case "${OPT}" in
 			mv $HOME/.ssh/{id_ed25519,id_ed25519.pub,id_ed25519-cert.pub} "$HOME/.ssh/Backup$daterelease"
 		fi
 		ssh-keygen -t ed25519 -C "taglio@${LDN}"
-		cat "$HOME/.ssh/id_ed25519.pub" > "$HOME/Work/telecom.lobby/OpenBSD/src/etc/ssh/authorized_keys"
+		cat "$HOME/.ssh/id_ed25519.pub" > "$HOME/Work/telecom.lobby/altBSD_network/src/etc/ssh/authorized_keys"
 		sed -i "s|^Public.*|Public ssh key for user = $(cat $HOME/.ssh/id_ed25519.pub)|" installation/install-vps.conf
 		pwdfile=$(mktemp)
 		# Read Password
