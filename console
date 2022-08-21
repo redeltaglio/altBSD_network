@@ -545,7 +545,7 @@ case "${OPT}" in
 					ssh $vpnc_host.${LDN} "sudo ipsec rereadall"
 					ssh $vpnc_host.${LDN} "sudo ipsec reload"
 				done
-				openssl x509 -leagcy -pubkey -noout -passin pass:123456789 -in "$tmpdir/$publichost.crt"  > src/etc/iked/pubkeys/ufqdn/"$srcid@ca.$domainname"
+				openssl x509 -legacy -pubkey -noout -passin pass:123456789 -in "$tmpdir/$publichost.crt"  > src/etc/iked/pubkeys/ufqdn/"$srcid@ca.$domainname"
 				srm -r "${tmpdir}"
 				echo -e "$srcid@ca.$domainname created please update repository and all the others Openbsd hosts"
 			done

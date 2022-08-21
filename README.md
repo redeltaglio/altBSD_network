@@ -2412,6 +2412,102 @@ Why not "[game of trees](https://gameoftrees.org/)"? Or "[game of thrones](https
 
 ![](https://gameoftrees.org/got.png)
 
+## Building a testing environment
+
+When complexity go straight forward, system administrators have got to test configurations in a testing environment to not cause disasters in the production camp.
+
+Considering a Linux based workstation our base doing it in a correct way isn't so complex:
+
+- Installing and configuring [GNS3 framework](https://en.wikipedia.org/wiki/Graphical_Network_Simulator-3) (*it's used also at NASA!*) , very handy speaking about networking emulation. 
+- Preparing templates for all kind of machine we want to emulate, like OpenBSD, NetBSD and Mikrotik for example.
+- Design and start a project for every kind of testing lab web want to archive.
+
+This kind of working lab is absolutely a most because of [packet and traffic flow](https://en.wikipedia.org/wiki/Traffic_flow_(computer_networking)) debugging. Those systems follow the [monolitich kernel](https://en.wikipedia.org/wiki/Monolithic_kernel) philosophy. 
+
+#### Graphical network simulator 3
+
+Some basic points, this framework use as as testing bed the well known daemons and protocols [QEMU](https://en.wikipedia.org/wiki/QEMU), [libvirt](https://en.wikipedia.org/wiki/Libvirt), [dnsmasq](https://en.wikipedia.org/wiki/Dnsmasq), [SPICE](https://en.wikipedia.org/wiki/Simple_Protocol_for_Independent_Computing_Environments) and [VNC](https://en.wikipedia.org/wiki/Virtual_Network_Computing) into others. All is organized used the [YAML](https://en.wikipedia.org/wiki/YAML) programming language.
+
+To [install GNS3](https://docs.gns3.com/docs/getting-started/installation/linux/) under Ubuntu we've got to add a special [ppa](https://itsfoss.com/ppa-guide/) that we could find in the project home page.
+
+I've recollected the options that I use in the configuration of the virtual environment, then I will discuss with you, reader, the most important ones:
+
+- [GNS3 OpenBSD OpenOSPFD](https://photos.app.goo.gl/u5yeCtcYSxE6Yn6Q9)
+
+![vinagre](https://raw.githubusercontent.com/redeltaglio/GNS3-OpenBSD-OpenOSPFD/main/images/gns3_options/5-imp.jpg)
+
+We prefer  [vinagre](https://en.wikipedia.org/wiki/Vinagre) as the GUI of the VNC protocol because of a bug present only using OpenBSD virtualized systems, keyboard simply doesn't work using others graphical clients.
+
+![](https://github.com/redeltaglio/GNS3-OpenBSD-OpenOSPFD/raw/main/images/gns3_options/13-imp.jpg)
+
+Important to underline the virtual interface used by the GNS3 system to masquerade the connections of the virtual systems to the WAN interface of our workstation is the one created by default with the libvirt installation. With that interface some iptables commands are added to our workstation, here you can review all of them:
+
+```shell
+root@trimurti:/home/riccardo/Work/telecom.lobby/GNS3-OpenBSD-OpenOSPFD# ip link | grep virbr0
+4: virbr0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default qlen 1000
+7: gns3tap0-0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel master virbr0 state UNKNOWN mode DEFAULT group default qlen 1000
+root@trimurti:/home/riccardo/Work/telecom.lobby/GNS3-OpenBSD-OpenOSPFD# ip addr | grep virbr0
+4: virbr0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+    inet 192.168.122.1/24 brd 192.168.122.255 scope global virbr0
+root@trimurti:/home/riccardo/Work/telecom.lobby/GNS3-OpenBSD-OpenOSPFD# iptables -t nat  -n -v -L
+Chain PREROUTING (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain POSTROUTING (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+ 6544 1322K LIBVIRT_PRT  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+
+Chain LIBVIRT_PRT (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+   27  2636 RETURN     all  --  *      *       192.168.122.0/24     224.0.0.0/24        
+    0     0 RETURN     all  --  *      *       192.168.122.0/24     255.255.255.255     
+    0     0 MASQUERADE  tcp  --  *      *       192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+   72 14790 MASQUERADE  udp  --  *      *       192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+    0     0 MASQUERADE  all  --  *      *       192.168.122.0/24    !192.168.122.0/24    
+root@trimurti:/home/riccardo/Work/telecom.lobby/GNS3-OpenBSD-OpenOSPFD# iptables -t nat -S
+-P PREROUTING ACCEPT
+-P INPUT ACCEPT
+-P OUTPUT ACCEPT
+-P POSTROUTING ACCEPT
+-N LIBVIRT_PRT
+-A POSTROUTING -j LIBVIRT_PRT
+-A LIBVIRT_PRT -s 192.168.122.0/24 -d 224.0.0.0/24 -j RETURN
+-A LIBVIRT_PRT -s 192.168.122.0/24 -d 255.255.255.255/32 -j RETURN
+-A LIBVIRT_PRT -s 192.168.122.0/24 ! -d 192.168.122.0/24 -p tcp -j MASQUERADE --to-ports 1024-65535
+-A LIBVIRT_PRT -s 192.168.122.0/24 ! -d 192.168.122.0/24 -p udp -j MASQUERADE --to-ports 1024-65535
+-A LIBVIRT_PRT -s 192.168.122.0/24 ! -d 192.168.122.0/24 -j MASQUERADE
+root@trimurti:/home/riccardo/Work/telecom.lobby/GNS3-OpenBSD-OpenOSPFD# 
+root@trimurti:/media/taglio/efb0978c-a864-428a-9264-5dbbcaa81fe8/GNS3/projects/VRF# cat /var/lib/libvirt/dnsmasq/default.conf | grep -v \#
+strict-order
+user=libvirt-dnsmasq
+pid-file=/run/libvirt/network/default.pid
+except-interface=lo
+bind-dynamic
+interface=virbr0
+dhcp-range=192.168.122.2,192.168.122.254,255.255.255.0
+dhcp-no-override
+dhcp-authoritative
+dhcp-lease-max=253
+dhcp-hostsfile=/var/lib/libvirt/dnsmasq/default.hostsfile
+addn-hosts=/var/lib/libvirt/dnsmasq/default.addnhosts
+root@trimurti:/media/taglio/efb0978c-a864-428a-9264-5dbbcaa81fe8/GNS3/projects/VRF# ps axu | grep dnsmasq | grep -v grep
+libvirt+    1693  0.0  0.0  10144  2492 ?        S    09:00   0:00 /usr/sbin/dnsmasq --conf-file=/var/lib/libvirt/dnsmasq/default.conf --leasefile-ro --dhcp-script=/usr/lib/libvirt/libvirt_leaseshelper
+root        1695  0.0  0.0  10040   384 ?        S    09:00   0:00 /usr/sbin/dnsmasq --conf-file=/var/lib/libvirt/dnsmasq/default.conf --leasefile-ro --dhcp-script=/usr/lib/libvirt/libvirt_leaseshelper
+root@trimurti:/media/taglio/efb0978c-a864-428a-9264-5dbbcaa81fe8/GNS3/projects/VRF# 
+```
+
+#### Virtual machines custom templates.
+
+First of all we shall got templates for new projects and machine instances. Is interesting that the system administrator could connect to them without using resource killers like GUI programs, but do it in [suckless](https://suckless.org/) way something very difficult to understand today look at your Chrome resource eater for example.
+
+Mikrotik got screen output prepared by default also to the serial device.  Download the correct disk image into the GNS3 root folder, sub directories `images/QEMU/`. You can find it look for CHR images.
+
 #### Qemu world
 
 ```bash
