@@ -12,7 +12,7 @@ Especially focused above security in every ISO/OSI pile level.
 
 #### The reason why.
 
-*Vatican corrupted priest, orders and bishops, a big part of Aristocracy and a lot of leafs (ancients aristocrats that wanna be), some corrupted secret services, para military and mafia are totally guilty about the recent destroy of democracy. They are owners and workers of an exploitation camp transmitted by electromagnetic weapons, radio that modulates hided behind FM broadcast official transmissions, and elaborated by artificial intelligence from the Collserola tower in Barcelona above all the Mediterranean area. Collserola is one of the most important hub of the human trade network in that area. Electronic slavery, the modern slavery that United Nation is investigating is my goal. With the same technology but with other type of use some nobles administrate Mafia, terrorism, manipulation, mental domination, corruption, fiscal frauds and so on. They use political dangerous territories, like the Catalan, as development camp. Development of absolutism and persecution to innocents, they call them political opponents. That system is the it is the supply furnace of the political parties linked to organized crime that govern our countries, the Mediterranean.*
+*Vatican corrupted priest, orders and bishops, a big part of Aristocracy and a lot of leafs (ancients aristocrats that wanna be), some corrupted secret services, para military and mafia are totally guilty about the recent destroy of democracy. They are owners and workers of an exploitation camp transmitted by electromagnetic weapons, radio that modulates hided behind FM broadcast official transmissions, and elaborated by artificial intelligence from the Collserola tower in Barcelona above all the Mediterranean area. Collserola is one of the most important hub of the human trade network in that area. Electronic slavery, the modern slavery that United Nation is investigating is my goal. With the same technology but with other type of use some nobles administrate Mafia, terrorism, manipulation, mental domination, corruption, fiscal frauds and so on. They use political dangerous territories, like the Catalan, as development camp. Development of absolutism and persecution to innocents, they call them political opponents. That system is the supply furnace of the political parties linked to organized crime that govern our countries, the Mediterranean. And I'm victim of as human guinea pig, as target individual.*
 
 #### Concepts and layouts.
 
@@ -2573,7 +2573,19 @@ taglio@shiva:/home/taglio/Iso$
 
 Take in count that the use of [mkhybrid(8)](https://man.openbsd.org/mkhybrid.8) was read from the OpenBSD CVS repository mirrored into [github](https://raw.githubusercontent.com/openbsd/src/master/distrib/amd64/ramdisk_cd/Makefile) as it was committed by a developer into `src/distrib/amd64/iso/Makefile`. Transfer `iso_serial.iso` to the GNS3 folder that we call `Optics`. 
 
-Configure the template
+Create a [qcow2](https://en.wikipedia.org/wiki/Qcow) image into the `Images/QEMU/` sub directory of 1 gigabyte:
+
+```bash
+┌─[● trimurti]─[taglio]─[~/Virtual/GNS3/projects/VRF]─[16:53]: $
+└─╼ >> qemu-img create OpenBSD$(echo $RELENG | sed "s|\.||g").qcow2 1G
+Formatting 'OpenBSD71.qcow2', fmt=raw size=1073741824
+┌─[● trimurti]─[taglio]─[~/Virtual/GNS3/projects/VRF]─[16:53]: $
+└─╼ >> 
+```
+
+
+
+
 
 #### Qemu world
 
