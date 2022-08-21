@@ -2675,7 +2675,7 @@ Next we can surf, simply launch `syspatch` as usual and then [halt(8)](https://m
 └─╼ >> cp hda_disk.qcow2 "${GNS3_ROOT}/images/QEMU/
 ```
 
-
+After all of that we add another BSD to the template collection, mean while we start to understand a little that system operative: [NetBSD](http://netbsd.org/).
 
 #### Qemu world
 
