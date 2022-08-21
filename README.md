@@ -10,6 +10,10 @@ Especially focused above security in every ISO/OSI pile level.
 
 ### Theory behind
 
+#### The reason why.
+
+*Vatican corrupted priest, orders and bishops, a big part of Aristocracy and a lot of leafs (ancients aristocrats that wanna be), some corrupted secret services, para military and mafia are totally guilty about the recent destroy of democracy. They are owners and workers of an exploitation camp transmitted by electromagnetic weapons, radio that modulates hided behind FM broadcast official transmissions, and elaborated by artificial intelligence from the Collserola tower in Barcelona above all the Mediterranean area. Collserola is one of the most important hub of the human trade network in that area. Electronic slavery, the modern slavery that United Nation is investigating is my goal. With the same technology but with other type of use some nobles administrate Mafia, terrorism, manipulation, mental domination, corruption, fiscal frauds and so on. They use political dangerous territories, like the Catalan, as development camp. Development of absolutism and persecution to innocents, they call them political opponents. That system is the it is the supply furnace of the political parties linked to organized crime that govern our countries, the Mediterranean.*
+
 #### Concepts and layouts.
 
 ![Political Map](https://upload.wikimedia.org/wikipedia/commons/5/55/Political_Map_of_the_World.png)
@@ -2506,7 +2510,70 @@ root@trimurti:/media/taglio/efb0978c-a864-428a-9264-5dbbcaa81fe8/GNS3/projects/V
 
 First of all we shall got templates for new projects and machine instances. Is interesting that the system administrator could connect to them without using resource killers like GUI programs, but do it in [suckless](https://suckless.org/) way something very difficult to understand today look at your Chrome resource eater for example.
 
-Mikrotik got screen output prepared by default also to the serial device.  Download the correct disk image into the GNS3 root folder, sub directories `images/QEMU/`. You can find it look for CHR images.
+![](https://github.com/redeltaglio/altBSD_network/raw/master/img/mikrotik_rawimages.png)
+
+Mikrotik got screen output prepared by default also to the serial device.  Download the correct disk image into the GNS3 root folder, sub directories `images/QEMU/`. You can find it looking for CHR raw disc images. Next configure the template in the framework under the section `Edit/Preferences/QEMU/Qemu Vms`, the only options to argue are:
+
+- RAM size: 128M
+- HDA primary master disk image: full path of the downloaded raw image.
+- Disk interface: [virtio](https://wiki.libvirt.org/page/Virtio).
+- Network adapters: 6.
+
+OpenBSD is a little bit tricky and we shall follow a work flow harder. This because we want to install template for others instances using serial console. Why? Because we like old style, we like suck less, we're geek, we simply want to do it in that way because we're born in 1.981 and we don't like to lame.
+
+We will use an OpenBSD based workstation to edit the release installation CD, that because my fault in understanding options of [genisoimage(1)](https://linux.die.net/man/1/genisoimage). To rebuild the [bootable](https://en.wikipedia.org/wiki/Booting) [ISO9660](https://en.wikipedia.org/wiki/ISO_9660) [image](https://en.wikipedia.org/wiki/Optical_disc_image) with the correct [boot.conf(5)](http://man.openbsd.org/OpenBSD-5.1/man5/amd64/boot.conf.5) follow these instructions:
+
+```bash
+taglio@shiva:/home/taglio$ mkdir -p Iso/{mnt,cd-dir} 
+taglio@shiva:/home/taglio$ ARCH=$(uname -m) ; RELENG=$(uname -r)
+taglio@shiva:/home/taglio$ ftp -o Iso/install$(echo $RELENG | sed "s|\.||g").iso https://cdn.openbsd.org/pub/OpenBSD/${RELENG}/${ARCH}/install$(echo $RELENG | sed "s|\.||g").iso
+Trying 151.101.130.217...
+Requesting https://cdn.openbsd.org/pub/OpenBSD/7.1/amd64/install71.iso
+100% |********************************************************************************************************************************************************|   561 MB    00:21    
+588500992 bytes received in 21.72 seconds (25.83 MB/s)
+taglio@shiva:/home/taglio$ cat << EOF > Iso/build_serial.sh
+#!/bin/ksh
+
+OSREV=$(uname -r)
+MACHINE=$(uname -m)
+CDROM="iso_serial.iso"
+
+doas vnconfig vnd0 ${1}
+doas mount -t cd9660 /dev/vnd0c mnt/
+doas cp -Rp  mnt/* cd-dir/ 
+doas chown -R $(whoami):$(whoami) cd-dir/
+find cd-dir/ -name "TRANS*" -type f -delete
+find cd-dir/ -name "boot.catalog" -type f -delete
+echo "stty com0 115200" > cd-dir/etc/boot.conf
+echo "set tty com0" >> cd-dir/etc/boot.conf
+echo "set image /${OSREV}/${MACHINE}/bsd.rd" >> cd-dir/etc/boot.conf
+mkhybrid -vv -a -R -T -L -l -d -D -N -o ${CDROM} -A "OpenBSD ${OSREV} ${MACHINE} bootonly CD" -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" -p "Theo de Raadt <deraadt@openbsd.org>" -V "serial console boot-only CD" -b ${OSREV}/${MACHINE}/cdbr -c ${OSREV}/${MACHINE}/boot.catalog cd-dir
+rm -rf cd-dir/*
+doas umount mnt/
+doas vnconfig -u vnd0
+EOF
+taglio@shiva:/home/taglio$ chmod +x Iso/build_serial.sh                                                                                       
+taglio@shiva:/home/taglio$ cd Iso ; ksh build_serial.sh
+doas (taglio@shiva.telecom.lobby) password:
+mkhybrid 1.12b5.1                                                                                                                                          
+Scanning cd-dir/7.1
+Scanning cd-dir/7.1/amd64
+Scanning cd-dir/etc
+
+Size of boot image is 4 sectors -> No-emulation CD boot sector
+Total translation table size: 920
+Total rockridge attributes bytes: 2495
+Total directory bytes: 8192
+Path table size(bytes): 48
+287354 extents written (561 Mb)
+taglio@shiva:/home/taglio/Iso$ ls -al iso_serial.iso                                                               
+-rw-r--r--  1 taglio  taglio  588500992 Aug 21 23:09 iso_serial.iso
+taglio@shiva:/home/taglio/Iso$ 
+```
+
+Take in count that the use of [mkhybrid(8)](https://man.openbsd.org/mkhybrid.8) was read from the OpenBSD CVS repository mirrored into [github](https://raw.githubusercontent.com/openbsd/src/master/distrib/amd64/ramdisk_cd/Makefile) as it was committed by a developer into `src/distrib/amd64/iso/Makefile`. Transfer `iso_serial.iso` to the GNS3 folder that we call `Optics`. 
+
+Configure the template
 
 #### Qemu world
 
@@ -2551,4 +2618,4 @@ subnet 192.168.31.0 netmask 255.255.255.0 {
 
 ```
 
-*Vatican, a big part of Aristocracy and a lot of leafs, and some corrupted secret services are totally guilty about the recent destroy of democracy. They are owners of an exploitation camp transmitted by electromagnetic weapons, radio that modulates hided behind FM broadcast official transmissions, and elaborated by artificial intelligence from the Collserola tower in Barcelona above all the Mediterranean area. Electronic slavery, the modern slavery that United Nation is investigating is my goal. With the same technology but with other type of use some nobles administrate Mafia, terrorism, manipulation, mental domination, corruption, fiscal frauds and so on. But in this case modulation is transmitted by many others towers.*
+*Vatican corrupted priest, orders and bishops, a big part of Aristocracy and a lot of leafs (ancients aristocrats that wanna be), some corrupted secret services, para military and mafia are totally guilty about the recent destroy of democracy. They are owners of an exploitation camp transmitted by electromagnetic weapons, radio that modulates hided behind FM broadcast official transmissions, and elaborated by artificial intelligence from the Collserola tower in Barcelona above all the Mediterranean area. Collserola is one of the most important hub of the human trade network in that area. Electronic slavery, the modern slavery that United Nation is investigating is my goal. With the same technology but with other type of use some nobles administrate Mafia, terrorism, manipulation, mental domination, corruption, fiscal frauds and so on. But in this case modulation is transmitted by many others towers.*
