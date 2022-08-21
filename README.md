@@ -2404,18 +2404,6 @@ root@shiva:/etc#
 
 ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/tos_dscp_2.png)
 
-#### OSPF deep diving
-
-![](https://github.com/redeltaglio/OpenBSD/raw/master/img/routing_tables_mk.png)
-
-![](https://raw.githubusercontent.com/redeltaglio/OpenBSD/master/img/ospf-timers-guide-table.webp)
-
-#### Git sucks
-
-Why not "[game of trees](https://gameoftrees.org/)"? Or "[game of thrones](https://en.wikipedia.org/wiki/Game_of_Thrones)"? Or other acronym?
-
-![](https://gameoftrees.org/got.png)
-
 ## Building a testing environment
 
 When complexity go straight forward, system administrators have got to test configurations in a testing environment to not cause disasters in the production camp.
@@ -2583,9 +2571,9 @@ Formatting 'OpenBSD71.qcow2', fmt=raw size=1073741824
 └─╼ >> 
 ```
 
+Configure the template exactly as the Mikrotik one but:
 
-
-
+specified the optical image that we've created, use 256MB of ram and specify the qcow2 disc image. In the boot order specif
 
 #### Qemu world
 
@@ -2630,4 +2618,18 @@ subnet 192.168.31.0 netmask 255.255.255.0 {
 
 ```
 
-*Vatican corrupted priest, orders and bishops, a big part of Aristocracy and a lot of leafs (ancients aristocrats that wanna be), some corrupted secret services, para military and mafia are totally guilty about the recent destroy of democracy. They are owners of an exploitation camp transmitted by electromagnetic weapons, radio that modulates hided behind FM broadcast official transmissions, and elaborated by artificial intelligence from the Collserola tower in Barcelona above all the Mediterranean area. Collserola is one of the most important hub of the human trade network in that area. Electronic slavery, the modern slavery that United Nation is investigating is my goal. With the same technology but with other type of use some nobles administrate Mafia, terrorism, manipulation, mental domination, corruption, fiscal frauds and so on. But in this case modulation is transmitted by many others towers.*
+#### OSPF deep diving
+
+![](https://github.com/redeltaglio/OpenBSD/raw/master/img/routing_tables_mk.png)
+
+![](https://raw.githubusercontent.com/redeltaglio/OpenBSD/master/img/ospf-timers-guide-table.webp)
+
+
+
+## 
+
+#### Appendix: Git sucks
+
+Why not "[game of trees](https://gameoftrees.org/)"? Or "[game of thrones](https://en.wikipedia.org/wiki/Game_of_Thrones)"? Or other acronym?
+
+![](https://gameoftrees.org/got.png)
