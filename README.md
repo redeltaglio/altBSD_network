@@ -2651,7 +2651,11 @@ Next we find also the exact command string that use GNS3 to start QEMU doing a `
 Start QEMU with /usr/bin/qemu-system-x86_64 -name OpenBSD7.1-1 -m 256M -smp cpus=1,sockets=1 -enable-kvm -machine smm=off -boot order=d -bios /home/taglio/GNS3/images/QEMU/BIOS/bios.bin -cdrom /home/taglio/GNS3/images/Optics/iso_serial.iso -drive file=/home/taglio/Virtual/GNS3/projects/test/project-files/qemu/dbf91f2d-2382-4321-a8e0-5f432e150b66/hda_disk.qcow2,if=ide,index=0,media=disk,id=drive0 -uuid dbf91f2d-2382-4321-a8e0-5f432e150b66 -serial telnet:127.0.0.1:5001,server,nowait -monitor tcp:127.0.0.1:44497,server,nowait -net none -device e1000,mac=0c:f9:1f:2d:00:00,netdev=gns3-0 -netdev socket,id=gns3-0,udp=127.0.0.1:10001,localaddr=127.0.0.1:10000 -device e1000,mac=0c:f9:1f:2d:00:01,netdev=gns3-1 -netdev socket,id=gns3-1,udp=127.0.0.1:10003,localaddr=127.0.0.1:10002 -device e1000,mac=0c:f9:1f:2d:00:02,netdev=gns3-2 -netdev socket,id=gns3-2,udp=127.0.0.1:10005,localaddr=127.0.0.1:10004 -device e1000,mac=0c:f9:1f:2d:00:03,netdev=gns3-3 -netdev socket,id=gns3-3,udp=127.0.0.1:10007,localaddr=127.0.0.1:10006 -device e1000,mac=0c:f9:1f:2d:00:04,netdev=gns3-4 -netdev socket,id=gns3-4,udp=127.0.0.1:10009,localaddr=127.0.0.1:10008 -device e1000,mac=0c:f9:1f:2d:00:05,netdev=gns3-5 -netdev socket,id=gns3-5,udp=127.0.0.1:10011,localaddr=127.0.0.1:10010 -display none
 ```
 
-Notice that the emulator allocate some ports for serial ports emulation with the option `-serial telnet:127.0.0.1:5001`, that will be of interest if we want to start a [tmux(1)](https://linux.die.net/man/1/tmux) terminal multiplexer with all the machines under control.
+Notice that the emulator allocate some ports for serial ports emulation with the option `-serial telnet:127.0.0.1:5001`, that will be of interest if we want to start a [tmux(1)](https://linux.die.net/man/1/tmux) terminal multiplexer with all the machines under control. But it's interesting also to film a nice [asciinema](https://asciinema.org/) video:
+
+[![asciicast](https://asciinema.org/a/V9jUR4JmmpfERq0L6QUqjDYOJ.svg)](https://asciinema.org/a/V9jUR4JmmpfERq0L6QUqjDYOJ)
+
+Next we can add into the graphic workspace a cloud and a link connection between it and the new OpenBSD router meaning the creation of a [TAP](https://en.wikipedia.org/wiki/TUN/TAP) device connecting the virtual machine to the `virbr0` bridge and let network traffic to be masquerade and get access to the Internet.
 
 #### Qemu world
 
