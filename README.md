@@ -2573,7 +2573,85 @@ Formatting 'OpenBSD71.qcow2', fmt=raw size=1073741824
 
 Configure the template exactly as the Mikrotik one but:
 
-specified the optical image that we've created, use 256MB of ram and specify the qcow2 disc image. In the boot order specif
+- RAM: 256MB.
+- Boot priority: CD/DVD ROM.
+- HDA primary master disk image: full path of the created raw image.
+-  CD/DVD ROM: full path of the created optical image.
+
+Create a new project with what so ever name and find it under the emulator root path with it YAML configuration file:
+
+```bash
+┌─[● trimurti]─[taglio]─[~/Virtual/GNS3/projects/test]─[17:29]: $
+└─╼ >> cat test.gns3 
+{
+    "auto_close": true,
+    "auto_open": false,
+    "auto_start": false,
+    "drawing_grid_size": 25,
+    "grid_size": 75,
+    "name": "test",
+    "project_id": "6dcaf183-b824-4fb4-b101-f05dc3c4cf45",
+    "revision": 9,
+    "scene_height": 1000,
+    "scene_width": 2000,
+    "show_grid": false,
+    "show_interface_labels": false,
+    "show_layers": false,
+    "snap_to_grid": false,
+    "supplier": null,
+    "topology": {
+        "computes": [],
+        "drawings": [],
+        "links": [],
+        "nodes": []
+    },
+    "type": "topology",
+    "variables": null,
+    "version": "2.2.33.1",
+    "zoom": 100
+}┌─[● trimurti]─[taglio]─[~/Virtual/GNS3/projects/test]─[17:29]: $
+└─╼ >> 
+```
+
+Then drag the icon of the OpenBSD template into the work space and run it and immediately stop it, under the same path you will find more directories:
+
+```bash
+└─╼ >> find project-files/
+project-files/
+project-files/qemu
+project-files/qemu/dbf91f2d-2382-4321-a8e0-5f432e150b66
+project-files/qemu/dbf91f2d-2382-4321-a8e0-5f432e150b66/ubridge.log
+project-files/qemu/dbf91f2d-2382-4321-a8e0-5f432e150b66/qemu-img.log
+project-files/qemu/dbf91f2d-2382-4321-a8e0-5f432e150b66/qemu.log
+project-files/qemu/dbf91f2d-2382-4321-a8e0-5f432e150b66/hda_disk.qcow2
+┌─[● trimurti]─[taglio]─[~/Virtual/GNS3/projects/test]─[19:01]: $
+└─╼ >> ls -al hda_disk.qcow2 ; qemu-img info hda_disk.qcow2 
+-rw-r--r-- 1 taglio taglio 196624 ago 21 19:01 hda_disk.qcow2
+image: hda_disk.qcow2
+file format: qcow2
+virtual size: 1 GiB (1073741824 bytes)
+disk size: 196 KiB
+cluster_size: 65536
+backing file: /home/taglio/GNS3/images/QEMU/OpenBSD71.qcow2
+backing file format: raw
+Format specific information:
+    compat: 1.1
+    compression type: zlib
+    lazy refcounts: false
+    refcount bits: 16
+    corrupt: false
+    extended l2: false
+```
+
+Notice another qcow2 disc image that is [backing](https://blog.programster.org/qemu-img-cheatsheet) the template one and the [uuid](https://en.wikipedia.org/wiki/Universally_unique_identifier) of the virtual machine instance.  
+
+Next we find also the exact command string that use GNS3 to start QEMU doing a `cat qemu.log`: 
+
+```bash
+Start QEMU with /usr/bin/qemu-system-x86_64 -name OpenBSD7.1-1 -m 256M -smp cpus=1,sockets=1 -enable-kvm -machine smm=off -boot order=d -bios /home/taglio/GNS3/images/QEMU/BIOS/bios.bin -cdrom /home/taglio/GNS3/images/Optics/iso_serial.iso -drive file=/home/taglio/Virtual/GNS3/projects/test/project-files/qemu/dbf91f2d-2382-4321-a8e0-5f432e150b66/hda_disk.qcow2,if=ide,index=0,media=disk,id=drive0 -uuid dbf91f2d-2382-4321-a8e0-5f432e150b66 -serial telnet:127.0.0.1:5001,server,nowait -monitor tcp:127.0.0.1:44497,server,nowait -net none -device e1000,mac=0c:f9:1f:2d:00:00,netdev=gns3-0 -netdev socket,id=gns3-0,udp=127.0.0.1:10001,localaddr=127.0.0.1:10000 -device e1000,mac=0c:f9:1f:2d:00:01,netdev=gns3-1 -netdev socket,id=gns3-1,udp=127.0.0.1:10003,localaddr=127.0.0.1:10002 -device e1000,mac=0c:f9:1f:2d:00:02,netdev=gns3-2 -netdev socket,id=gns3-2,udp=127.0.0.1:10005,localaddr=127.0.0.1:10004 -device e1000,mac=0c:f9:1f:2d:00:03,netdev=gns3-3 -netdev socket,id=gns3-3,udp=127.0.0.1:10007,localaddr=127.0.0.1:10006 -device e1000,mac=0c:f9:1f:2d:00:04,netdev=gns3-4 -netdev socket,id=gns3-4,udp=127.0.0.1:10009,localaddr=127.0.0.1:10008 -device e1000,mac=0c:f9:1f:2d:00:05,netdev=gns3-5 -netdev socket,id=gns3-5,udp=127.0.0.1:10011,localaddr=127.0.0.1:10010 -display none
+```
+
+Notice that the emulator allocate some ports for serial ports emulation with the option `-serial telnet:127.0.0.1:5001`, that will be of interest if we want to start a [tmux(1)](https://linux.die.net/man/1/tmux) terminal multiplexer with all the machines under control.
 
 #### Qemu world
 
