@@ -2657,6 +2657,26 @@ Notice that the emulator allocate some ports for serial ports emulation with the
 
 Next we can add into the graphic workspace a cloud and a link connection between it and the new OpenBSD router meaning the creation of a [TAP](https://en.wikipedia.org/wiki/TUN/TAP) device connecting the virtual machine to the `virbr0` bridge and let network traffic to be masquerade and get access to the Internet.
 
+![](https://github.com/redeltaglio/altBSD_network/raw/master/img/gns3_tap_openbsd.png)
+
+```bash
+RT-VIRT-01# dhclient em0                                                       
+em0: no lease....got lease
+em0: 192.168.122.26 lease accepted from 192.168.122.1 (52:54:00:12:6a:6d)
+RT-VIRT-01# 
+```
+
+Next we can surf, simply launch `syspatch` as usual and then [halt(8)](https://man.openbsd.org/OpenBSD-7.1/halt.8) the machine and stop the instance from the GUI program. Now we could apply differences between template raw disc and the already installed one with `qemu-img commit hda_disk.qcow2 ` from the uuid subdirectory; but we prefer to add another template copying the instance raw disc to the root path of the program because we will be able to use a system that boot from optic ramdisc support and the other from the raw disc already installed.
+
+```bash
+┌─[● trimurti]─[taglio]─[/media/taglio/efb0978c-a864-428a-9264-5dbbcaa81fe8/GNS3/projects/test/project-files/qemu/97794d6d-f155-49a0-a747-585ead84c4db]─[21:53]: $
+└─╼ >> GNS3_ROOT="/home/taglio/Virtual/GNS3"
+┌─[● trimurti]─[taglio]─[/media/taglio/efb0978c-a864-428a-9264-5dbbcaa81fe8/GNS3/projects/test/project-files/qemu/97794d6d-f155-49a0-a747-585ead84c4db]─[21:54]: $
+└─╼ >> cp hda_disk.qcow2 "${GNS3_ROOT}/images/QEMU/
+```
+
+
+
 #### Qemu world
 
 ```bash
