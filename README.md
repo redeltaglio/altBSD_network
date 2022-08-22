@@ -2721,6 +2721,10 @@ https://cdn.netbsd.org/pub/NetBSD/NetBSD-9.3/amd64/installation/cdrom/boot-com.i
 
 After the install create a new fresh install template and copy the qcow2 image.
 
+#### Case of study: interconnection between operators.
+
+![](https://github.com/redeltaglio/altBSD_network/raw/master/img/operators_interconnection.png)
+
 #### Case of study: OSPF deep diving
 
 ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/routing_tables_mk.png)
