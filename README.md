@@ -2675,6 +2675,44 @@ Next we can surf, simply launch `syspatch` as usual and then [halt(8)](https://m
 └─╼ >> cp hda_disk.qcow2 "${GNS3_ROOT}/images/QEMU/
 ```
 
+Next we've got to detach from backing:
+
+```bash
+┌─[● trimurti]─[taglio]─[~/Virtual/GNS3/images/QEMU]─[07:26]: $
+└─╼ >> qemu-img info hda_disk.qcow2
+image: hda_disk.qcow2
+file format: qcow2
+virtual size: 1 GiB (1073741824 bytes)
+disk size: 979 MiB
+cluster_size: 65536
+backing file: /home/taglio/GNS3/images/QEMU/OpenBSD71.qcow2
+backing file format: raw
+Format specific information:
+    compat: 1.1
+    compression type: zlib
+    lazy refcounts: false
+    refcount bits: 16
+    corrupt: false
+    extended l2: false
+┌─[● trimurti]─[taglio]─[~/Virtual/GNS3/images/QEMU]─[07:27]: $ qemu-img rebase -F qcow2 -f qcow2 -b "" hda_disk.qcow2
+┌─[● trimurti]─[taglio]─[~/Virtual/GNS3/images/QEMU]─[07:29]: $
+└─╼ >> qemu-img info hda_disk.qcow2
+image: hda_disk.qcow2
+file format: qcow2
+virtual size: 1 GiB (1073741824 bytes)
+disk size: 979 MiB
+cluster_size: 65536
+Format specific information:
+    compat: 1.1
+    compression type: zlib
+    lazy refcounts: false
+    refcount bits: 16
+    corrupt: false
+    extended l2: false
+┌─[● trimurti]─[taglio]─[~/Virtual/GNS3/images/QEMU]─[07:29]: $
+└─╼ >> 
+```
+
 After all of that we add another BSD to the template collection, mean while we start to understand a little that system operative: [NetBSD](http://netbsd.org/). First of all we shall boot the install optic support using the serial screen output. In that case the NetBSD guys got a "semi hidden" disc image with the suffix `-com`. But it works only as boot stage cd. So we add to connect to the cloud in the program to get Internet connection. Remember to create the qcow2 raw disc image.
 
 https://cdn.netbsd.org/pub/NetBSD/NetBSD-9.3/amd64/installation/cdrom/boot-com.iso
@@ -2683,7 +2721,7 @@ https://cdn.netbsd.org/pub/NetBSD/NetBSD-9.3/amd64/installation/cdrom/boot-com.i
 
 After the install create a new fresh install template and copy the qcow2 image.
 
-#### An example project: OSPF deep diving
+#### Case of study: OSPF deep diving
 
 ![](https://github.com/redeltaglio/OpenBSD/raw/master/img/routing_tables_mk.png)
 
