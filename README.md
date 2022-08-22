@@ -2675,7 +2675,21 @@ Next we can surf, simply launch `syspatch` as usual and then [halt(8)](https://m
 └─╼ >> cp hda_disk.qcow2 "${GNS3_ROOT}/images/QEMU/
 ```
 
-After all of that we add another BSD to the template collection, mean while we start to understand a little that system operative: [NetBSD](http://netbsd.org/).
+After all of that we add another BSD to the template collection, mean while we start to understand a little that system operative: [NetBSD](http://netbsd.org/). First of all we shall boot the install optic support using the serial screen output. In that case the NetBSD guys got a "semi hidden" disc image with the suffix `-com`. But it works only as boot stage cd. So we add to connect to the cloud in the program to get Internet connection. Remember to create the qcow2 raw disc image.
+
+https://cdn.netbsd.org/pub/NetBSD/NetBSD-9.3/amd64/installation/cdrom/boot-com.iso
+
+[![asciicast](https://asciinema.org/a/516323.svg)](https://asciinema.org/a/516323)
+
+After the install create a new fresh install template and copy the qcow2 image.
+
+#### An example project: OSPF deep diving
+
+![](https://github.com/redeltaglio/OpenBSD/raw/master/img/routing_tables_mk.png)
+
+![](https://raw.githubusercontent.com/redeltaglio/OpenBSD/master/img/ospf-timers-guide-table.webp)
+
+
 
 #### Qemu world
 
@@ -2719,12 +2733,6 @@ subnet 192.168.31.0 netmask 255.255.255.0 {
 }
 
 ```
-
-#### OSPF deep diving
-
-![](https://github.com/redeltaglio/OpenBSD/raw/master/img/routing_tables_mk.png)
-
-![](https://raw.githubusercontent.com/redeltaglio/OpenBSD/master/img/ospf-timers-guide-table.webp)
 
 
 
