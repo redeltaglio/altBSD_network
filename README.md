@@ -1733,34 +1733,54 @@ taglio@trimurti:~/Work/telecom.lobby/OpenBSD$
 
 #### LTE appendix, unstable cells. 
 
-Sometimes and in some environment depending on relative problems to cells or temporary problems with virtual mobile operators or MMC. We add some cycles and one special route to test LTE connectivity using [netwatch](https://wiki.mikrotik.com/wiki/Manual:Tools/Netwatch) in the client side and `ppp profile script` in the server side . For example mobile operator Orange in the Spanish territory cut data connection every hour by sending a special [GSM command](http://howltestuffworks.blogspot.com/2012/02/deactivate-eps-bearer-context-request.html) `+CGEV: EPS PDN DEACT 5`:
+Sometimes and in some environment depending on relative problems to cells or temporary problems with virtual mobile operators or MMC. We add some cycles and one special route to test LTE connectivity using [netwatch](https://wiki.mikrotik.com/wiki/Manual:Tools/Netwatch). For example mobile operator Orange in the Spanish territory cut data connection every hour by sending a special [GSM command](http://howltestuffworks.blogspot.com/2012/02/deactivate-eps-bearer-context-request.html) `+CGEV: EPS PDN DEACT 5`:
 
 ```bash
-#delay-time 240 = 4min
-#counter>5 = 20 min
+/system logging action
+add disk-file-count=6 disk-file-name=flash/ltemem name=ltemem target=disk
+/system logging
+add action=ltemem disabled=yes topics=lte
 /tool netwatch
-add down-script="/int lte set [find] disabled=yes\r\
-    \n/interface l2tp-client set [ find ] disabled=yes\r\
-    \n/int lte set [find] disabled=no\r\
+add disabled=no down-script="/system/logging/set [find topics=\"lte\"] disabled=no\r\
+    \n:delay delay-time=5 ; \r\
+    \n:if ([/ping 8.8.8.8 count=5 size=64 interval=2s]=0) do={\r\
+    \n\t/interface lte set [find] disabled=yes\r\
+    \n                :delay delay-time=3\r\
+    \n                 /interface lte set [find] disabled=no\r\
+    \n\t:local continue true\r\
+    \n\t:local counter 0\r\
+    \n                :delay delay-time=180 ; \r\
+    \n\t:while (\$continue) do={\r\
+    \n\t\t:if ([/ping 8.8.4.4 count=5 size=64 interval=2s]=0) do={ \r\
+    \n\t\t\t:set \$counter (\$counter + 1)\r\
+    \n\t\t\t:if (\$counter>5) do={\t \r\
+    \n\t\t\t\tlocal now [/system/clock/get value-name=time]\r\
+    \n                                                                local psk [pick ([/certificate scep-server otp generate minutes-valid=1 as-value]->\"password\") 0 8];\r\
+    \n                                                                local lhn [/system/identity/get name]\r\
+    \n                                                               /system/scheduler/add name=ltereboot on-event={/system reboot;} start-time=(\$now+15m)\r\
+    \n                                                                /tool/sms/set receive-enabled=yes secret=\$psk allowed-number=6609222890 port=lte1\r\
+    \n                                                                /tool/sms/send lte1 phone-number=660922890 message=\"\$lhn with \$psk LTE lock, reboot\?\"\r\
+    \n                                                                :delay delay-time=15m\r\
     \n\r\
-    \n:local continue true\r\
-    \n:local counter 0\r\
-    \n:while (\$continue) do={:delay delay-time=240 ; :if ([/ping 9.9.9.9 count=1]=0) do={ :set \$counter (\$counter + 1); :if (\$counter>5) do={:set counter \
-    0 ; /sys reboot} else={/interface lte set [find] disabled=yes ; /int lte set [find] disabled=no}} else={:set \$continue false ; :set \$counter 0}}\r\
-    \n" host=9.9.9.9 interval=10s up-script=":delay delay-time=2\r\
-    \n/ip cloud force-update\r\
-    \n:delay delay-time=2\r\
-    \n:local continue true\r\
-    \n:while (\$continue) do={:if ([/ip cloud get public-address] = 188.213.5.220) do={/ip cloud force-update} else={:set \$continue false}}\r\
+    \n\t\t\t} else={\r\
+    \n\t\t\t\t/interface lte set [find] disabled=yes\r\
+    \n                                                               :delay delay-time=3\r\
+    \n                                                               /interface lte set [find] disabled=no \r\
+    \n\t\t\t} else={\r\
+    \n\t\t\t\t:set \$continue false \r\
+    \n\t\t\t\t:set \$counter 0\r\
+    \n\t\t\t}\r\
+    \n\t\t}\r\
+    \n\t}\r\
+    \n}\r\
+    \n" host=9.9.9.9 http-codes="" interval=20s packet-count=3 packet-interval=2s packet-size=54 start-delay=4m test-script="" thr-loss-percent=100% timeout=1s type=icmp up-script=\
+    ":log info \"LTE $uicc up and running...\"\r\
+    \n/tool/sms/set receive-enabled=no secret=\"\" allowed-number=\"\"\r\
+    \n/system/scheduler/remove [find]\r\
+    \n/system/logging/set [find topics=\"lte\"] disabled=yes\r\
     \n\r\
-    \n:delay delay-time=10\r\
-    \n/interface l2tp-client set [ find ] disabled=no\r\
-    \n\r\
-    \n\r\
-    \n:set \$continue true\r\
-    \n:delay delay-time=60\r\
-    \n:while (\$continue) do={:delay delay-time=60 ; :if ([/interface l2tp-client get [find] running] = false) do={/interface l2tp-client set [find] disabled=\
-    yes ;
+    \n"
+
 ```
 
 ```bash
