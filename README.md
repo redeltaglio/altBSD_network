@@ -1731,7 +1731,7 @@ configuring OSPF daemon
 taglio@trimurti:~/Work/telecom.lobby/OpenBSD$
 ```
 
-#### LTE appendix, unstable cells. 
+#### LTE: unstable cells. 
 
 Sometimes and in some environment depending on relative problems to cells or temporary problems with virtual mobile operators or MMC. We add some cycles and one special route to test LTE connectivity using [netwatch](https://wiki.mikrotik.com/wiki/Manual:Tools/Netwatch). For example mobile operator Orange in the Spanish territory cut data connection every hour by sending a special [GSM command](http://howltestuffworks.blogspot.com/2012/02/deactivate-eps-bearer-context-request.html) `+CGEV: EPS PDN DEACT 5`:
 
@@ -1740,6 +1740,9 @@ Sometimes and in some environment depending on relative problems to cells or tem
 add disk-file-count=6 disk-file-name=flash/ltemem name=ltemem target=disk
 /system logging
 add action=ltemem disabled=yes topics=lte
+/system script
+add dont-require-permissions=no name=ltereboot owner=admin policy=ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon source=\
+    "/system reboot;"
 /tool netwatch
 add disabled=no down-script="/system/logging/set [find topics=\"lte\"] disabled=no\r\
     \n:delay delay-time=5 ; \r\
@@ -1754,12 +1757,16 @@ add disabled=no down-script="/system/logging/set [find topics=\"lte\"] disabled=
     \n\t\t:if ([/ping 8.8.4.4 count=5 size=64 interval=2s]=0) do={ \r\
     \n\t\t\t:set \$counter (\$counter + 1)\r\
     \n\t\t\t:if (\$counter>5) do={\t \r\
-    \n\t\t\t\tlocal now [/system/clock/get value-name=time]\r\
-    \n                                                                local psk [pick ([/certificate scep-server otp generate minutes-valid=1 as-value]->\"password\") 0 8];\r\
-    \n                                                                local lhn [/system/identity/get name]\r\
-    \n                                                               /system/scheduler/add name=ltereboot on-event={/system reboot;} start-time=(\$now+15m)\r\
-    \n                                                                /tool/sms/set receive-enabled=yes secret=\$psk allowed-number=6609222890 port=lte1\r\
-    \n                                                                /tool/sms/send lte1 phone-number=660922890 message=\"\$lhn with \$psk LTE lock, reboot\?\"\r\
+    \n\t\t\t\t:local now [/system/clock/get value-name=time]\r\
+    \n                                                                :local psk [:pick ([/certificate scep-server otp generate minutes-valid=1 \
+    as-value]->\"password\") 0 8];\r\
+    \n                                                                :local lhn [/system/identity/get name]\r\
+    \n                                                               /system/scheduler/add name=ltereboot on-event={/system reboot;} start-time=\
+    (\$now+15m)\r\
+    \n                                                                /tool/sms/set receive-enabled=yes secret=\$psk allowed-number=6609222890 p\
+    ort=lte1\r\
+    \n                                                                /tool/sms/send lte1 phone-number=660922890 message=\"\$lhn with \$psk LTE \
+    lock, reboot\?\"\r\
     \n                                                                :delay delay-time=15m\r\
     \n\r\
     \n\t\t\t} else={\r\
@@ -1773,13 +1780,15 @@ add disabled=no down-script="/system/logging/set [find topics=\"lte\"] disabled=
     \n\t\t}\r\
     \n\t}\r\
     \n}\r\
-    \n" host=9.9.9.9 http-codes="" interval=20s packet-count=3 packet-interval=2s packet-size=54 start-delay=4m test-script="" thr-loss-percent=100% timeout=1s type=icmp up-script=\
-    ":log info \"LTE $uicc up and running...\"\r\
+    \n" host=9.9.9.9 http-codes="" interval=20s packet-count=3 packet-interval=2s packet-size=54 start-delay=4m test-script="" \
+    thr-loss-percent=100% timeout=1s type=icmp up-script=":local uuic ([/interface/lte/monitor lte1 once as-value]->\"uicc\")\r\
+    \n:log info \"LTE \$uuic up and running...\"\r\
     \n/tool/sms/set receive-enabled=no secret=\"\" allowed-number=\"\"\r\
     \n/system/scheduler/remove [find]\r\
     \n/system/logging/set [find topics=\"lte\"] disabled=yes\r\
     \n\r\
     \n"
+
 
 ```
 
@@ -1832,6 +1841,10 @@ while ((counter<5)); do
 done
 
 ```
+
+#### LTE: more tunes and some hacks.
+
+Mikrotik 
 
 
 
