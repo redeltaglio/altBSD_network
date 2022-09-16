@@ -1884,6 +1884,8 @@ To change IMEI in [R11e-LTE6](https://mikrotik.com/product/r11e_lte6):
 /interface lte at-chat lte1 input="AT+RESET"
 ```
 
+
+
 ### Hamradio passive and active point of presence
 
 #### Linux Rasberry and HackRF
@@ -2463,9 +2465,81 @@ root@shiva:/etc#
 
 ```
 
+The same politics we use in EdgeOS and Mikrotik:
 
+```bash
+root@indra# show traffic-control   
+ advanced-queue {
+     filters {
+         match 10 {
+             attach-to 1
+             ip {
+                 destination {
+                     address 172.16.23.0/24
+                 }
+             }
+             target 10
+         }
+         match 11 {
+             attach-to 2
+             mark 111
+             target 11
+         }
+     }
+     leaf {
+         queue 10 {
+             bandwidth 180mbit
+             burst {
+                 burst-rate 200mbit
+                 burst-size 600mb
+             }
+             parent 1
+             queue-type INDRA_CODEL
+         }
+         queue 11 {
+             bandwidth 80mbit
+             burst {
+                 burst-rate 100mbit
+                 burst-size 300mb
+             }
+             parent 2
+             queue-type INDRA_CODEL
+         }
+     }
+     queue-type {
+         fq-codel INDRA_CODEL {
+             flows 6144
+             limit 1024
+         }
+     }
+     root {
+         queue 1 {
+             attach-to eth3.111
+             bandwidth 200mbit
+             description "WISP download"
+         }
+         queue 2 {
+             attach-to pppoe0
+             bandwidth 300mbit
+         }
+     }
+ }
+[edit]
+root@indra# 
+```
 
-
+```bash
+/ip firewall mangle
+add action=mark-packet chain=postrouting dst-address=10.1.10.0/24 new-packet-mark=down out-interface=ether1 \
+    passthrough=no
+add action=mark-packet chain=postrouting new-packet-mark=up out-interface=lte1 passthrough=no src-address=10.1.10.0/24
+/queue type
+add kind=fq-codel name=FQCODEL
+/queue tree
+add limit-at=40M max-limit=50M name=GLOBAL parent=global queue=default
+add limit-at=20M max-limit=22M name=DOWN packet-mark=down parent=GLOBAL queue=FQCODEL
+add limit-at=20M max-limit=22M name=UP packet-mark=up parent=GLOBAL queue=FQCODEL
+```
 
 #### Deep packet inspection packet DSCP classification in GRE transit.
 
