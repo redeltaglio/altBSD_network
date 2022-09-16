@@ -1844,9 +1844,45 @@ done
 
 #### LTE: more tunes and some hacks.
 
-Mikrotik 
+![](https://github.com/redeltaglio/altBSD_network/raw/master/img/lte_calc.jpg)
 
+As mobile technology has grown up in the decades with dizzying improvements, providers have to cover themselves above all with endless consumption rates. Remember that LTE with carrier aggregation, what Mikrotik for example call [LTE6](https://mikrotik.com/product/r11e_lte6), and strong signal strength could deliver to the client, or why not to a little point of presence a tower, more than 300mbps of theoretical throughput (layer one) to the installation. A lot of if good administrated with shaping, queues and bufferbloat! *And we're not speak about 5G...*
 
+So if we're not a single device connecting to the Internet, we're a customer, an office or in some cases a little point of presence we've to take care to some details. 
+
+The first of is [TTL](https://en.wikipedia.org/wiki/Time_to_live), just fake it with `mangle` features of iptables, in this manner we're acting like an Android device:
+
+```bash
+/ip firewall mangle
+add action=change-ttl chain=prerouting in-interface=lte1 new-ttl=increment:5 passthrough=yes ttl=equal:1
+add action=change-ttl chain=postrouting new-ttl=set:64 out-interface=lte1 passthrough=yes
+```
+
+Next sometimes provider could ban ourselves from network, so we've got to loose SIM card contract. But sometimes they ban probably also serial number of the modem that we use to connect to the mobile network. What is called IMEI. How to change it?
+
+Modem mounted by Mikrotik devices are from [Luat 合宙 |通信](https://www.openluat.com/welcome), a Chinese manufacturer very interesting by the way. Openluat modems speak [AT commands](https://en.wikipedia.org/wiki/Hayes_command_set), which specifications are:
+
+- [Openluat AT commands](https://github.com/redeltaglio/altBSD_network/raw/master/pdf/AT%20COMMAND%20Set%20for%20Luat%204G%20Modules_V3.89.pdf)
+
+To change IMEI in [R11e-LTE](https://mikrotik.com/product/r11e_lte) just do (change 000000000000000 with your new IMEI):
+
+```bash
+/interface lte at-chat lte1 input="AT*MRD_IMEI=R"
+/interface lte at-chat lte1 input="AT*MRD_IMEI=D"
+/interface lte at-chat lte1 input="AT*MRD_IMEI=W,0101,11JAN1970,000000000000000"
+/interface lte at-chat lte1 input="AT+RESET"
+```
+
+To change IMEI in [R11e-LTE6](https://mikrotik.com/product/r11e_lte6):
+
+```bash
+/interface lte at-chat lte1 input="AT*PROD=2"
+/interface lte at-chat lte1 input="AT*MRD_IMEI=R"
+/interface lte at-chat lte1 input="AT*MRD_IMEI=D"
+/interface lte at-chat lte1 input="AT*MRD_IMEI=W,0,01JAN1970,000000000000000"
+/interface lte at-chat lte1 input="AT*PROD=0"
+/interface lte at-chat lte1 input="AT+RESET"
+```
 
 ### Hamradio passive and active point of presence
 
