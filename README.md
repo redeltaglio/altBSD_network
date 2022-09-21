@@ -1842,6 +1842,81 @@ done
 
 ```
 
+Also we add some scripts and one scheduler that run 20 minutes after every reboot to check wireguard connections:
+
+```bash
+/system script
+add dont-require-permissions=no name=wireguard_jp.telecomlobby.com owner=taglio policy=\
+    ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon source=":local int [/interface/wireguard/peers/get \
+    value-name=interface [find endpoint-address=jp.telecomlobby.com]]\r\
+    \n:local source [/ip/address/get value-name=address [find interface=\$int]]\r\
+    \n:local ip [:toip [:pick \$source 0 [:find \$source \"/\"]]]\r\
+    \n:local pip (\$ip - 1) \r\
+    \n:if ([/ping \$pip count=5 size=64 interval=2s vrf=vrf1]=0) do={ /interface/wireguard/peers/disable  [find endpoint\
+    -address=jp.telecomlobby.com] ; /interface/wireguard/peers/enable  [find endpoint-address=jp.telecomlobby.com]}"
+add dont-require-permissions=no name=wireguard_bg.telecomlobby.com owner=taglio policy=\
+    ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon source=":local int [/interface/wireguard/peers/get \
+    value-name=interface [find endpoint-address=bg.telecomlobby.com]]\r\
+    \n:local source [/ip/address/get value-name=address [find interface=\$int]]\r\
+    \n:local ip [:toip [:pick \$source 0 [:find \$source \"/\"]]]\r\
+    \n:local pip (\$ip - 1) \r\
+    \n:if ([/ping \$pip count=5 size=64 interval=2s vrf=vrf1]=0) do={ /interface/wireguard/peers/disable  [find endpoint\
+    -address=bg.telecomlobby.com] ; /interface/wireguard/peers/enable  [find endpoint-address=bg.telecomlobby.com]}"
+add dont-require-permissions=no name=wireguard_au.telecomlobby.com owner=taglio policy=\
+    ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon source=":local int [/interface/wireguard/peers/get \
+    value-name=interface [find endpoint-address=au.telecomlobby.com]]\r\
+    \n:local source [/ip/address/get value-name=address [find interface=\$int]]\r\
+    \n:local ip [:toip [:pick \$source 0 [:find \$source \"/\"]]]\r\
+    \n:local pip (\$ip - 1) \r\
+    \n:if ([/ping \$pip count=5 size=64 interval=2s vrf=vrf1]=0) do={ /interface/wireguard/peers/disable  [find endpoint\
+    -address=au.telecomlobby.com] ; /interface/wireguard/peers/enable  [find endpoint-address=au.telecomlobby.com]}"
+add dont-require-permissions=no name=wireguard_br.telecomlobby.com owner=taglio policy=\
+    ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon source=":local int [/interface/wireguard/peers/get \
+    value-name=interface [find endpoint-address=br.telecomlobby.com]]\r\
+    \n:local source [/ip/address/get value-name=address [find interface=\$int]]\r\
+    \n:local ip [:toip [:pick \$source 0 [:find \$source \"/\"]]]\r\
+    \n:local pip (\$ip - 1) \r\
+    \n:if ([/ping \$pip count=5 size=64 interval=2s vrf=vrf1]=0) do={ /interface/wireguard/peers/disable  [find endpoint\
+    -address=br.telecomlobby.com] ; /interface/wireguard/peers/enable  [find endpoint-address=br.telecomlobby.com]}"
+add dont-require-permissions=no name=wireguard_us.telecomlobby.com owner=taglio policy=\
+    ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon source=":local int [/interface/wireguard/peers/get \
+    value-name=interface [find endpoint-address=us.telecomlobby.com]]\r\
+    \n:local source [/ip/address/get value-name=address [find interface=\$int]]\r\
+    \n:local ip [:toip [:pick \$source 0 [:find \$source \"/\"]]]\r\
+    \n:local pip (\$ip - 1) \r\
+    \n:if ([/ping \$pip count=5 size=64 interval=2s vrf=vrf1]=0) do={ /interface/wireguard/peers/disable  [find endpoint\
+    -address=us.telecomlobby.com] ; /interface/wireguard/peers/enable  [find endpoint-address=us.telecomlobby.com]}"
+add dont-require-permissions=no name=wireguard_choopa.telecomlobby.com owner=taglio policy=\
+    ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon source=":local int [/interface/wireguard/peers/get \
+    value-name=interface [find endpoint-address=choopa.telecomlobby.com]]\r\
+    \n:local source [/ip/address/get value-name=address [find interface=\$int]]\r\
+    \n:local ip [:toip [:pick \$source 0 [:find \$source \"/\"]]]\r\
+    \n:local pip (\$ip - 1) \r\
+    \n:if ([/ping \$pip count=5 size=64 interval=2s vrf=vrf1]=0) do={ /interface/wireguard/peers/disable  [find endpoint\
+    -address=choopa.telecomlobby.com] ; /interface/wireguard/peers/enable  [find endpoint-address=choopa.telecomlobby.co\
+    m]}"
+add dont-require-permissions=no name=wireguard_uk.telecomlobby.com owner=taglio policy=\
+    ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon source=":local int [/interface/wireguard/peers/get \
+    value-name=interface [find endpoint-address=uk.telecomlobby.com]]\r\
+    \n:local source [/ip/address/get value-name=address [find interface=\$int]]\r\
+    \n:local ip [:toip [:pick \$source 0 [:find \$source \"/\"]]]\r\
+    \n:local pip (\$ip - 1) \r\
+    \n:if ([/ping \$pip count=5 size=64 interval=2s vrf=vrf1]=0) do={ /interface/wireguard/peers/disable  [find endpoint\
+    -address=uk.telecomlobby.com] ; /interface/wireguard/peers/enable  [find endpoint-address=uk.telecomlobby.com]}"
+/system scheduler
+add interval=20m name=wireguard_after on-event=" /system/script/run wireguard_au.telecomlobby.com\r\
+    \n /system/script/run wireguard_uk.telecomlobby.com\r\
+    \n /system/script/run wireguard_br.telecomlobby.com\r\
+    \n /system/script/run wireguard_bg.telecomlobby.com\r\
+    \n /system/script/run wireguard_us.telecomlobby.com\r\
+    \n /system/script/run wireguard_jp.telecomlobby.com\r\
+    \n /system/script/run wireguard_choopa.telecomlobby.com" policy=ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon start-time=startup
+```
+
+
+
+
+
 #### LTE: more tunes and some hacks.
 
 ![](https://github.com/redeltaglio/altBSD_network/raw/master/img/lte_calc.jpg)
