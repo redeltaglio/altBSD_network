@@ -65,11 +65,16 @@ case "$1" in
 		done
 	;;
 	"-T")
+		if [[ "${2}" =~ "^tun*[0-9]$" ]]; then
+			echo "pass tun interface device as argument"
+			exit 1
+		fi
+
 		peer=$(/sbin/ip link show dev "${2}" | grep alias | awk '{print $2}')
 		phm=$(echo "${peer}" | cut -d . -f1)
 		typeset -u upphm="${phm}"
 		tunnelid="telecomlobby-${upphm}"
-    		grelip=$(/sbin/ip addr show dev "${2}" | grep -w inet | awk '{print $2}' | sed "s|/.*$||")
+    	grelip=$(/sbin/ip addr show dev "${2}" | grep -w inet | awk '{print $2}' | sed "s|/.*$||")
 		greliplo=$(echo "${grelip}" | cut -d . -f4)
 		grebrdiplo=$(/sbin/ip addr show dev "${2}" | grep -w inet | awk '{print $4}' | cut -d . -f4)
 		(( grebrdiplo-greliplo==2 )) && ((peerliplo = grebrdiplo - 1)) || ((peerliplo = grebrdiplo - 2))
@@ -106,6 +111,10 @@ case "$1" in
 		fi
 	;;
 	"-P")
+		if [[ "${2}" =~ "^tun*[0-9]$" ]]; then
+			echo "pass tun interface device as argument"
+			exit 1
+		fi
 		case "${PLUTO_VERB}" in
 		        up-host|up-client)
 		                /usr/bin/logger "Putting interface ${2} up"
@@ -142,15 +151,27 @@ case "$1" in
 	;;
 	"-L")
 		#sleep 60s
-		#sleep 60s
-                n=3
-                #open_sem $n
-                while true
-                do
+		n=2
+		open_sem $n
+		while true
+		do
+            for tunid in $(/sbin/ip link | grep tun | grep -v tun[7,8] | awk '{print $2}' | sed "s|@.*||g" | sed "s|tun||g"); do
+        		for rid in "${rids[@]}"; do
+        			[ "${tunid}" = $(echo $rid | cut -d \; -f2) ] && (
+        				/sbin/ip route | grep 192.168.13.$(echo $rid | cut -d \; -f1) | grep tun$tunid
+        				[ $? -eq 1 ] && (
+        					for group in "${groups[@]}"; do
+        						/sbin/ip route ls table "${group}" | grep tun$tunid
+        						[ $? -eq 0 ] && /sbin/ip route del table "${group}" default dev tun$tunid
+                            done
+        				)
+        			)
+        		done
 
-			for tunid in $(/sbin/ip link | grep tun | grep -v tun6 | grep -v tun9 | grep -v tun12 | awk '{print $2}' | sed "s|@.*||g" | sed "s|tun||g"); do
-				[[ $(ps axu | grep timeout | grep tun$tunid | wc -l) == 0 ]] && ./timeout -s9 25 /config/routectrl/route_ctrl.sh -T tun$tunid
-			done
+        	done
+            for tunid in $(/sbin/ip link | grep tun | grep -v tun[7,8] | awk '{print $2}' | sed "s|@.*||g" | sed "s|tun||g"); do
+                [[ $(ps axu | grep timeout | grep tun$tunid | wc -l) == 0 ]] && ./timeout -s9 25 /config/routectrl/route_ctrl.sh -T tun$tunid
+            done
 		done
 	;;
 	*)

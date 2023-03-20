@@ -1959,6 +1959,16 @@ To change IMEI in [R11e-LTE6](https://mikrotik.com/product/r11e_lte6):
 /interface lte at-chat lte1 input="AT+RESET"
 ```
 
+Change PIN and reset with PUK:
+
+```bash
+# disable PIN, if PIN is 3645:
+/interface lte at-chat lte1 input="AT+CLCK=\"SC\",0,\"3645\""
+
+# reset SIM with locked PIN from PUK 564897, setting new PIN as 4376
+/interface lte at-chat lte1 input="AT+CPIN=564897,4376
+```
+
 
 
 ### Hamradio passive and active point of presence

@@ -1,0 +1,5 @@
+apt update
+apt upgrade
+dpkg-reconfigure locales
+UTF8
+nsd httpd 
